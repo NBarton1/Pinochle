@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: #008000;" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pinochle.Pinochle">
+    <children>
+      <VBox fx:id="playerMeldLayVBox" layoutX="187.0" layoutY="180.0" prefHeight="150.0" prefWidth="105.0">
+         <children>
+            <HBox />
+            <HBox />
+            <HBox />
+            <HBox />
+         </children>
+      </VBox>
+      <VBox fx:id="opponent1MeldLayVBox" layoutX="89.0" layoutY="140.0" prefHeight="150.0" prefWidth="105.0">
+         <children>
+            <HBox />
+            <HBox />
+            <HBox />
+            <HBox />
+         </children>
+      </VBox>
+      <VBox fx:id="opponent2MeldLayVBox" layoutX="403.0" layoutY="140.0" prefHeight="150.0" prefWidth="105.0">
+         <children>
+            <HBox />
+            <HBox />
+            <HBox />
+            <HBox />
+         </children>
+      </VBox>
+      <VBox fx:id="teammateMeldLayVBox" layoutX="285.0" layoutY="65.0" prefHeight="150.0" prefWidth="105.0">
+         <children>
+            <HBox />
+            <HBox />
+            <HBox />
+            <HBox />
+         </children>
+      </VBox>
+        <GridPane layoutX="14.0" layoutY="14.0" prefHeight="59.0" prefWidth="152.0">
+            <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" maxWidth="141.33335367838544" minWidth="10.0" prefWidth="110.0" />
+                <ColumnConstraints hgrow="SOMETIMES" maxWidth="62.33331298828125" minWidth="10.0" prefWidth="42.0" />
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            </rowConstraints>
+            <children>
+                <Label prefHeight="36.0" prefWidth="122.0" text="Your score:">
+                    <font>
+                        <Font name="Bodoni MT Black" size="17.0" />
+                    </font>
+                </Label>
+                <Label prefHeight="39.0" prefWidth="121.0" text="Their Score:" GridPane.rowIndex="1">
+                    <font>
+                        <Font name="Bodoni MT Black" size="16.0" />
+                    </font>
+                </Label>
+                <Label fx:id="otherTeamScoreLabel" prefHeight="38.0" prefWidth="42.0" text="0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                    <font>
+                        <Font name="Bodoni MT Black" size="16.0" />
+                    </font>
+                </Label>
+                <Label fx:id="playerTeamScoreLabel" text="0" GridPane.columnIndex="1">
+                    <font>
+                        <Font name="Bodoni MT Black" size="16.0" />
+                    </font>
+                </Label>
+            </children>
+        </GridPane>
+        <HBox fx:id="playerCardsHBOX" layoutX="166.0" layoutY="318.0" />
+        <VBox fx:id="opponent1" layoutX="44.0" layoutY="90.0" prefHeight="97.0" prefWidth="45.0" />
+      <HBox fx:id="teammate" layoutX="166.0" layoutY="15.0" prefWidth="0.0" />
+      <VBox fx:id="opponent2" layoutX="530.0" layoutY="90.0" prefHeight="97.0" prefWidth="45.0" />
+      <GridPane fx:id="suitsGrid" layoutX="224.0" layoutY="123.0" prefHeight="153.0" prefWidth="152.0" visible="false">
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+         <children>
+            <ImageView fitHeight="64.0" fitWidth="72.0" pickOnBounds="true" preserveRatio="true" GridPane.rowIndex="1">
+               <image>
+                  <Image url="@../../../images/S.png" />
+               </image>
+            </ImageView>
+            <ImageView fitHeight="64.0" fitWidth="87.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../../../images/C.png" />
+               </image>
+            </ImageView>
+            <ImageView fitHeight="64.0" fitWidth="95.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="1">
+               <image>
+                  <Image url="@../../../images/H.png" />
+               </image>
+            </ImageView>
+            <ImageView fitHeight="91.0" fitWidth="64.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="1" GridPane.rowIndex="1">
+               <image>
+                  <Image url="@../../../images/D.png" />
+               </image>
+            </ImageView>
+         </children>
+      </GridPane>
+      <Button fx:id="newDealButton" alignment="CENTER" layoutX="488.0" layoutY="25.0" mnemonicParsing="false" onAction="#playHand" prefHeight="47.0" prefWidth="84.0" style="-fx-background-color: lime;" text="New Deal" textOverrun="CLIP">
+         <font>
+            <Font name="Bodoni MT Black" size="13.0" />
+         </font>
+      </Button>
+    </children>
+</AnchorPane>

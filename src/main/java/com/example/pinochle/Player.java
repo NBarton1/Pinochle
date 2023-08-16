@@ -2,6 +2,7 @@ package com.example.pinochle;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 
 public class Player {
     private Card[] hand;
@@ -190,6 +191,71 @@ public class Player {
         return meldPerSuit;
     }
 
+    public LinkedHashMap<String, Integer> getMeldCardsHashMap(String suit) {
+        LinkedHashMap<String, Integer> meldCards = new LinkedHashMap<>();
+        ArrayList<ArrayList<String>> meldCombos = getMeldCombos();
+        int di=0;
+        switch(suit) {
+            case "H" -> di = 1;
+            case "S" -> di = 2;
+            case "D" -> di = 3;
+        }
+
+        // Runs
+        int comboCount = getComboCount(meldCombos.get(5+di));
+        for(int i=0; i<comboCount; i++) {
+            for(String card : meldCombos.get(5+di)) {
+                try {
+                    meldCards.put(card, Math.max(meldCards.get(card), comboCount));
+                } catch(NullPointerException err) {
+                    meldCards.put(card, comboCount);
+                }
+            }
+        }
+
+        // Marriages
+        for(int i=0; i<4; i++) {
+            comboCount = getComboCount(meldCombos.get(9 + i));
+            for (int j = 0; j < comboCount; j++) {
+                for(String card : meldCombos.get(9+i)) {
+                    try {
+                        meldCards.put(card, Math.max(meldCards.get(card), comboCount));
+                    } catch(NullPointerException err) {
+                        meldCards.put(card, comboCount);
+                    }
+                }
+            }
+        }
+
+        // Arounds
+        for(int i=0; i<4; i++) {
+            comboCount = getComboCount(meldCombos.get(1 + i));
+            for (int j = 0; j < comboCount; j++) {
+                for(String card : meldCombos.get(1+i)) {
+                    try {
+                        meldCards.put(card, Math.max(meldCards.get(card), comboCount));
+                    } catch(NullPointerException err) {
+                        meldCards.put(card, comboCount);
+                    }
+                }
+            }
+        }
+
+        // Pinochle
+        comboCount = getComboCount(meldCombos.get(0));
+        for (int j = 0; j < comboCount; j++) {
+            for(String card : meldCombos.get(0)) {
+                try {
+                    meldCards.put(card, Math.max(meldCards.get(card), comboCount));
+                } catch(NullPointerException err) {
+                    meldCards.put(card, comboCount);
+                }
+            }
+        }
+
+        return meldCards;
+    }
+
     @Override
     public String toString() {
         StringBuilder ret = new StringBuilder();
@@ -201,5 +267,14 @@ public class Player {
             ret.append(meld).append("  ");
         }
         return ret + "\n";
+    }
+
+    public int j(int[] i) {
+        int a = i[0];
+        int b = i[1];
+        int c = i[2];
+        int d = i[3];
+
+        return Math.max(Math.max(a, b), Math.max(c, d));
     }
 }

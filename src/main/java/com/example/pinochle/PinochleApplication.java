@@ -10,8 +10,8 @@ import java.io.IOException;
 public class PinochleApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(PinochleApplication.class.getResource("GUI.fxml"));
-        Scene scene = new Scene(fxmlLoader.load());
+        FXMLLoader fxmlLoader = new FXMLLoader(PinochleApplication.class.getResource("Pinochle.fxml"));
+        Scene scene = new Scene(fxmlLoader.load(), 600, 400);
         stage.setTitle("Pinochle Game");
         stage.setScene(scene);
         stage.show();

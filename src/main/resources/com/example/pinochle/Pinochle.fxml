@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.Group?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.image.Image?>
@@ -9,44 +10,51 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.Ellipse?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: #008000;" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pinochle.Pinochle">
+<AnchorPane fx:id="gameAnchorPane" prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: #008000;" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pinochle.Pinochle">
     <children>
-      <VBox fx:id="playerMeldLayVBox" layoutX="187.0" layoutY="180.0" prefHeight="150.0" prefWidth="105.0">
+      <Group fx:id="playersMeldsGroup" layoutX="89.0" layoutY="65.0">
          <children>
-            <HBox />
-            <HBox />
-            <HBox />
-            <HBox />
+              <VBox fx:id="playerMeldLayVBox" layoutX="98.0" layoutY="115.0" prefHeight="150.0" prefWidth="105.0">
+                  <children>
+                      <HBox />
+                      <HBox />
+                      <HBox />
+                      <HBox />
+                  </children>
+              </VBox>
+              <VBox fx:id="opponent1MeldLayVBox" layoutY="75.0" prefHeight="150.0" prefWidth="105.0">
+                  <children>
+                      <HBox />
+                      <HBox />
+                      <HBox />
+                      <HBox />
+                  </children>
+              </VBox>
+              <VBox fx:id="teammateMeldLayVBox" layoutX="196.0" prefHeight="150.0" prefWidth="105.0">
+                  <children>
+                      <HBox />
+                      <HBox />
+                      <HBox />
+                      <HBox />
+                  </children>
+              </VBox>
+              <VBox fx:id="opponent2MeldLayVBox" layoutX="314.0" layoutY="75.0" prefHeight="150.0" prefWidth="105.0">
+                  <children>
+                      <HBox />
+                      <HBox />
+                      <HBox />
+                      <HBox />
+                  </children>
+              </VBox>
          </children>
-      </VBox>
-      <VBox fx:id="opponent1MeldLayVBox" layoutX="89.0" layoutY="140.0" prefHeight="150.0" prefWidth="105.0">
-         <children>
-            <HBox />
-            <HBox />
-            <HBox />
-            <HBox />
-         </children>
-      </VBox>
-      <VBox fx:id="opponent2MeldLayVBox" layoutX="403.0" layoutY="140.0" prefHeight="150.0" prefWidth="105.0">
-         <children>
-            <HBox />
-            <HBox />
-            <HBox />
-            <HBox />
-         </children>
-      </VBox>
-      <VBox fx:id="teammateMeldLayVBox" layoutX="285.0" layoutY="65.0" prefHeight="150.0" prefWidth="105.0">
-         <children>
-            <HBox />
-            <HBox />
-            <HBox />
-            <HBox />
-         </children>
-      </VBox>
-        <GridPane layoutX="14.0" layoutY="14.0" prefHeight="59.0" prefWidth="152.0">
+      </Group>
+        <GridPane fx:id="scoresGridPane" disable="true" layoutX="14.0" layoutY="14.0" prefHeight="59.0" prefWidth="152.0" visible="false">
             <columnConstraints>
                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="141.33335367838544" minWidth="10.0" prefWidth="110.0" />
                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="62.33331298828125" minWidth="10.0" prefWidth="42.0" />
@@ -78,43 +86,191 @@
                 </Label>
             </children>
         </GridPane>
-        <HBox fx:id="playerCardsHBOX" layoutX="166.0" layoutY="318.0" />
-        <VBox fx:id="opponent1" layoutX="44.0" layoutY="90.0" prefHeight="97.0" prefWidth="45.0" />
-      <HBox fx:id="teammate" layoutX="166.0" layoutY="15.0" prefWidth="0.0" />
-      <VBox fx:id="opponent2" layoutX="530.0" layoutY="90.0" prefHeight="97.0" prefWidth="45.0" />
-      <GridPane fx:id="suitsGrid" layoutX="224.0" layoutY="123.0" prefHeight="153.0" prefWidth="152.0" visible="false">
-        <columnConstraints>
-          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-        </columnConstraints>
-        <rowConstraints>
-          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-        </rowConstraints>
+      <Group layoutX="44.0" layoutY="15.0">
          <children>
-            <ImageView fitHeight="64.0" fitWidth="72.0" pickOnBounds="true" preserveRatio="true" GridPane.rowIndex="1">
+              <HBox fx:id="playerCardsHBOX" layoutX="122.0" layoutY="303.0" />
+              <VBox fx:id="opponent1VBox" layoutY="75.0" prefHeight="97.0" prefWidth="45.0" />
+              <HBox fx:id="teammateHBox" layoutX="122.0" prefWidth="0.0" />
+              <VBox fx:id="opponent2VBox" layoutX="486.0" layoutY="75.0" prefHeight="97.0" prefWidth="45.0" />
+         </children>
+      </Group>
+      <Group fx:id="bidStackPanesGroup" layoutX="28.0" layoutY="15.0">
+         <children>
+              <StackPane disable="true" layoutX="211.0" layoutY="222.0" visible="false">
+                  <children>
+                      <Ellipse fill="LIME" radiusX="61.0" radiusY="39.0" stroke="BLACK" strokeType="INSIDE" />
+                      <Label fx:id="playerBidLabel" text="Player">
+                          <font>
+                              <Font name="Bodoni MT Black" size="16.0" />
+                          </font>
+                      </Label>
+                  </children>
+              </StackPane>
+              <StackPane disable="true" layoutY="161.0" visible="false">
+                  <children>
+                      <Ellipse fill="LIME" radiusX="61.0" radiusY="39.0" stroke="BLACK" strokeType="INSIDE" />
+                      <Label fx:id="opponent1BidLabel" text="Opponent 1">
+                          <font>
+                              <Font name="Bodoni MT Black" size="16.0" />
+                          </font>
+                      </Label>
+                  </children>
+              </StackPane>
+              <StackPane disable="true" layoutX="211.0" visible="false">
+                  <children>
+                      <Ellipse fill="LIME" radiusX="61.0" radiusY="39.0" stroke="BLACK" strokeType="INSIDE" />
+                      <Label fx:id="teammateBidLabel" text="Teammate">
+                          <font>
+                              <Font name="Bodoni MT Black" size="16.0" />
+                          </font>
+                      </Label>
+                  </children>
+              </StackPane>
+              <StackPane disable="true" layoutX="436.0" layoutY="146.0" visible="false">
+                  <children>
+                      <Ellipse fill="LIME" radiusX="61.0" radiusY="39.0" stroke="BLACK" strokeType="INSIDE" />
+                      <Label fx:id="opponent2BidLabel" text="Opponent 2">
+                          <font>
+                              <Font name="Bodoni MT Black" size="16.0" />
+                          </font>
+                      </Label>
+                  </children>
+              </StackPane>
+         </children>
+      </Group>
+        <GridPane fx:id="suitsGrid" layoutX="224.0" layoutY="123.0" prefHeight="153.0" prefWidth="152.0" visible="false">
+            <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            </rowConstraints>
+            <children>
+                <ImageView fitHeight="64.0" fitWidth="72.0" pickOnBounds="true" preserveRatio="true" GridPane.rowIndex="1">
+                    <image>
+                        <Image url="@../../../images/S.png" />
+                    </image>
+                </ImageView>
+                <ImageView fitHeight="64.0" fitWidth="87.0" pickOnBounds="true" preserveRatio="true">
+                    <image>
+                        <Image url="@../../../images/C.png" />
+                    </image>
+                </ImageView>
+                <ImageView fitHeight="64.0" fitWidth="95.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="1">
+                    <image>
+                        <Image url="@../../../images/H.png" />
+                    </image>
+                </ImageView>
+                <ImageView fitHeight="91.0" fitWidth="64.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                    <image>
+                        <Image url="@../../../images/D.png" />
+                    </image>
+                </ImageView>
+            </children>
+        </GridPane>
+        <GridPane fx:id="bidActionsGrid" disable="true" layoutX="200.0" layoutY="137.0" prefHeight="47.0" prefWidth="200.0" visible="false">
+            <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            </rowConstraints>
+            <children>
+                <Button mnemonicParsing="false" prefHeight="40.0" prefWidth="92.0" text="Pass" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
+                    <font>
+                        <Font name="Bodoni MT Black" size="16.0" />
+                    </font>
+                </Button>
+                <Button fx:id="bidButton" mnemonicParsing="false" prefHeight="40.0" prefWidth="92.0" text="Bid" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
+                    <font>
+                        <Font name="Bodoni MT Black" size="16.0" />
+                    </font>
+                </Button>
+            </children>
+        </GridPane>
+        <Button fx:id="advanceButton" alignment="CENTER" disable="true" layoutX="488.0" layoutY="25.0" mnemonicParsing="false" onAction="#startBid" prefHeight="47.0" prefWidth="84.0" style="-fx-background-color: #00FF00;" text="To Bid" textOverrun="CLIP" visible="false">
+            <font>
+                <Font name="Bodoni MT Black" size="13.0" />
+            </font>
+        </Button>
+      <Label fx:id="welcomeLabel" layoutX="179.0" layoutY="80.0" prefHeight="26.0" prefWidth="241.0" text="Welcome to Pinochle!">
+         <font>
+            <Font name="Bodoni MT Black" size="21.0" />
+         </font>
+      </Label>
+      <Group fx:id="welcomeImageGroup" layoutX="223.0" layoutY="270.0">
+         <children>
+            <ImageView fitHeight="97.0" fitWidth="72.0" layoutY="9.0" pickOnBounds="true" preserveRatio="true">
                <image>
-                  <Image url="@../../../images/S.png" />
+                  <Image url="@../../../images/JD.png" />
                </image>
             </ImageView>
-            <ImageView fitHeight="64.0" fitWidth="87.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fitHeight="97.0" fitWidth="72.0" layoutX="27.0" pickOnBounds="true" preserveRatio="true">
                <image>
-                  <Image url="@../../../images/C.png" />
+                  <Image url="@../../../images/JD.png" />
                </image>
             </ImageView>
-            <ImageView fitHeight="64.0" fitWidth="95.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="1">
+            <ImageView fitHeight="97.0" fitWidth="72.0" layoutX="53.0" layoutY="23.0" pickOnBounds="true" preserveRatio="true">
                <image>
-                  <Image url="@../../../images/H.png" />
+                  <Image url="@../../../images/QS.png" />
                </image>
             </ImageView>
-            <ImageView fitHeight="91.0" fitWidth="64.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="1" GridPane.rowIndex="1">
+            <ImageView fitHeight="97.0" fitWidth="72.0" layoutX="86.0" layoutY="9.0" pickOnBounds="true" preserveRatio="true">
                <image>
-                  <Image url="@../../../images/D.png" />
+                  <Image url="@../../../images/QS.png" />
                </image>
             </ImageView>
          </children>
-      </GridPane>
-      <Button fx:id="newDealButton" alignment="CENTER" layoutX="488.0" layoutY="25.0" mnemonicParsing="false" onAction="#playHand" prefHeight="47.0" prefWidth="84.0" style="-fx-background-color: lime;" text="New Deal" textOverrun="CLIP">
+      </Group>
+      <StackPane fx:id="trumpSuitIndicatorStackPane" layoutX="27.0" layoutY="330.0" prefHeight="1.0" prefWidth="1.0" />
+      <Group fx:id="dealerChipsGroup" layoutX="14.0" layoutY="12.0">
+         <children>
+            <StackPane layoutX="485.0" layoutY="345.0" visible="false">
+               <children>
+                  <Circle fill="WHITE" radius="13.0" stroke="WHITE" strokeType="INSIDE" />
+                  <Label text="D">
+                     <font>
+                        <Font name="Bodoni MT Black" size="15.0" />
+                     </font>
+                  </Label>
+               </children>
+            </StackPane>
+            <StackPane layoutX="1.0" layoutY="267.0" visible="false">
+               <children>
+                  <Circle fill="WHITE" radius="13.0" stroke="WHITE" strokeType="INSIDE" />
+                  <Label text="D">
+                     <font>
+                        <Font name="Bodoni MT Black" size="15.0" />
+                     </font>
+                  </Label>
+               </children>
+            </StackPane>
+            <StackPane layoutX="158.0" layoutY="1.0" visible="false">
+               <children>
+                  <Circle fill="WHITE" radius="13.0" stroke="WHITE" strokeType="INSIDE" />
+                  <Label text="D">
+                     <font>
+                        <Font name="Bodoni MT Black" size="15.0" />
+                     </font>
+                  </Label>
+               </children>
+            </StackPane>
+            <StackPane layoutX="534.0" layoutY="267.0" visible="false">
+               <children>
+                  <Circle fill="WHITE" radius="13.0" stroke="WHITE" strokeType="INSIDE" />
+                  <Label text="D">
+                     <font>
+                        <Font name="Bodoni MT Black" size="15.0" />
+                     </font>
+                  </Label>
+               </children>
+            </StackPane>
+         </children>
+      </Group>
+      <Button fx:id="welcomeButton" layoutX="252.0" layoutY="170.0" mnemonicParsing="false" onAction="#startGame" prefHeight="59.0" prefWidth="95.0" style="-fx-background-color: #00ff00;" text="Start Game">
          <font>
             <Font name="Bodoni MT Black" size="13.0" />
          </font>

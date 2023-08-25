@@ -905,13 +905,16 @@ public class Pinochle implements Initializable {
         }
     }
 
+    /**
+     * Deactivates all things needed during bidding phase and sets up trick phase
+     */
     private void endBiddingPhase() {
         setAdvanceButton(true);
         setBidStackPanes(false);
         updateMeldPerTeam();
         layMeld();
-        //updateTricksPerTeam();
-        //updateScores();
+        updateTricksPerTeam();
+        updateScores();
         ((ImageView) trumpSuitIndicatorStackPane.getChildren().get(0)).setImage(new Image(Objects.requireNonNull(Card.class.getResourceAsStream("/images/" + trumpSuit + ".png"))));
     }
 

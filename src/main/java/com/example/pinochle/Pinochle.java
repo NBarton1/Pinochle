@@ -138,13 +138,9 @@ public class Pinochle implements Initializable {
      */
     private Deck deck;
     /**
-     * Player team's score
+     * Array of scores
      */
-    private int playerTeamScore;
-    /**
-     * Other team's score
-     */
-    private int otherTeamScore;
+    private int[] scores;
     /**
      * Trump suit of the hand
      */
@@ -169,6 +165,18 @@ public class Pinochle implements Initializable {
      * Indicator of when bidding phase ends
      */
     private boolean endBiddingPhase;
+    /**
+     * What each team bid per hand
+     */
+    private int[] bidPerTeam;
+    /**
+     * How much meld each team has per hand
+     */
+    private int[] meldPerTeam;
+    /**
+     * How many tricks each team pulled per hand
+     */
+    private int[] tricksPerTeam;
 
     /**
      * Starts the program
@@ -209,7 +217,7 @@ public class Pinochle implements Initializable {
     private void getVariables() {
         dealer = 0;
         PLAYERCOUNT = 4;
-        playerTeamScore = otherTeamScore = 0;
+        scores = new int[] {0, 0};
         BACK = new Image(Objects.requireNonNull(Card.class.getResourceAsStream("/images/back.png")));
         deck = new Deck();
         players = new Player[PLAYERCOUNT];
@@ -241,8 +249,6 @@ public class Pinochle implements Initializable {
             setImageViewUserData(i);
         }
         getPlayerCardImages();
-
-        setSuitsGrid();
         setTrumpSuitIndicatorStackPane();
     }
 
@@ -250,6 +256,10 @@ public class Pinochle implements Initializable {
      * Starts the hand by dealing and appropriately setting images
      */
     private void startHand() {
+        bidPerTeam = new int[] {0, 0};
+        meldPerTeam = new int[] {0, 0};
+        tricksPerTeam = new int[] {0, 0};
+
         for(int i=0; i<playersMeldsGroup.getChildren().size(); i++) {
             VBox parent = (VBox) playersMeldsGroup.getChildren().get(i);
             for (int j = 0; j< Objects.requireNonNull(parent).getChildren().size(); j++) {
@@ -295,13 +305,6 @@ public class Pinochle implements Initializable {
         isBidding = new int[] {0, 0, 0, 0};
         bidAtLeastOnce = new boolean[] {false, false, false, false};
         endBiddingPhase = false;
-        for(int i=0; i<PLAYERCOUNT; i++) {
-            int[] expectedPoints = getExpectedPoints(i);
-            for(int num : expectedPoints) {
-                System.out.print(num + "  ");
-            }
-            System.out.println();
-        }
         bid(false, false, false);
     }
 
@@ -418,20 +421,21 @@ public class Pinochle implements Initializable {
         return imageView;
     }
 
-
     /**
      * Sets the grid used to pick trump suit
+     * @param on show/hide
      */
-    private void setSuitsGrid() {
+    private void setSuitsGrid(boolean on) {
         for(int i=0; i<suitsGrid.getChildren().size(); i++) {
             ImageView imageView = (ImageView) suitsGrid.getChildren().get(i);
             imageView.setUserData(i);
             imageView.setOnMouseClicked(event -> pickSuit((int) imageView.getUserData()));
         }
-        suitsGrid.setVisible(false);
-        suitsGrid.setDisable(true);
+        suitsGrid.setVisible(on);
+        suitsGrid.setDisable(!on);
+        if(on) suitsGrid.toFront();
+        else suitsGrid.toBack();
     }
-
 
     /**
      * On click, determine which suit is trump for this hand
@@ -440,18 +444,14 @@ public class Pinochle implements Initializable {
     private void pickSuit(int i) {
         String[] suits = new String[] {"S", "C", "H", "D"};
         trumpSuit = suits[i];
-        suitsGrid.setVisible(false);
-        setAdvanceButton(true);
-
-        layMeld();
-        ((ImageView) trumpSuitIndicatorStackPane.getChildren().get(0)).setImage(new Image(Objects.requireNonNull(Card.class.getResourceAsStream("/images/" + trumpSuit + ".png"))));
+        setSuitsGrid(false);
+        endBiddingPhase();
     }
 
     /**
      * Lays all players' meld on the table
      */
     private void layMeld() {
-        System.out.println(bid);
         for(int i=0; i<playersMeldsGroup.getChildren().size(); i++) {
             VBox parent = (VBox) playersMeldsGroup.getChildren().get(i);
             ArrayList<String> meldCards = getMeldCards(players[i].getMeldCardsHashMap(trumpSuit));
@@ -496,8 +496,8 @@ public class Pinochle implements Initializable {
                 playerBidLabel.setText("Pass!");
                 if (biddersLeft() == 0) {
                     setAdvanceButton(true);
-                    playerTeamScore -= 50;
-                    playerTeamScoreLabel.setText(String.valueOf(playerTeamScore));
+                    scores[0] -= 50;
+                    playerTeamScoreLabel.setText(String.valueOf(scores[0]));
                 }
             }
         }
@@ -611,22 +611,17 @@ public class Pinochle implements Initializable {
                 if(bid<=60) bid-=2;
                 else bid-=5;
             }
-            computerWonBid(bidder);
+            bidPerTeam[bidder%2] = bid;
             endBiddingPhase = true;
+            computerWonBid(bidder);
         } else if(isBidding[bidder]==0 && !hasBid && biddersLeft()==1) { // Computer gets dropped on but passes
             int team = bidder%2;
-            int score;
-            Label scoreLabel = playerTeamScoreLabel;
-            if(team==1) {
-                otherTeamScore-=bid;
-                score = otherTeamScore;
-                scoreLabel = otherTeamScoreLabel;
-            } else {
-                playerTeamScore-=bid;
-                score = playerTeamScore;
-            }
+            Label scoreLabel;
+            scores[team] -= bid;
+            if(team==1) scoreLabel = otherTeamScoreLabel;
+            else scoreLabel = playerTeamScoreLabel;
             setAdvanceButton(true);
-            scoreLabel.setText(String.valueOf(score));
+            scoreLabel.setText(String.valueOf(scores[team]));
             isBidding[bidder] = -1;
             assert label != null;
             label.setText("Pass!");
@@ -652,9 +647,8 @@ public class Pinochle implements Initializable {
             ((Button) bidActionsGrid.getChildren().get(1)).setText("Bid "+bid);
             bidActionsGrid.setVisible(true);
         } else if(isBidding[0]==1 && biddersLeft()==1) { // Player has won bid
-            suitsGrid.setVisible(true);
-            suitsGrid.setDisable(false);
-            suitsGrid.toFront();
+            bidPerTeam[0] += bid;
+            setSuitsGrid(true);
             setBidStackPanes(false);
         }
     }
@@ -664,18 +658,14 @@ public class Pinochle implements Initializable {
      * @param bidder computer that won bid
      */
     private void computerWonBid(int bidder) {
-        String[] suits = new String[] {"C", "H", "S", "D"};
+        String[] suits = new String[]{"C", "H", "S", "D"};
         int[] expectedPoints = getExpectedPoints(bidder);
         int max = max(expectedPoints);
-        for(int i=0; i<PLAYERCOUNT; i++) {
-            if(expectedPoints[i] == max) trumpSuit = suits[i];
+        for (int i = 0; i < PLAYERCOUNT; i++) {
+            if (expectedPoints[i] == max) trumpSuit = suits[i];
         }
-        setAdvanceButton(true);
-        setBidStackPanes(false);
-        layMeld();
-        ((ImageView) trumpSuitIndicatorStackPane.getChildren().get(0)).setImage(new Image(Objects.requireNonNull(Card.class.getResourceAsStream("/images/" + trumpSuit + ".png"))));
+        endBiddingPhase();
     }
-
     /**
      * Sets the trump suit indicator
      */
@@ -715,12 +705,12 @@ public class Pinochle implements Initializable {
             double expectedPoints = players[player].calcMeld()[suit] + 8;
             if(bidAtLeastOnce[(player+2)%4]) expectedPoints += 10;
 
+            // Expected points per ways to get points
             double expectedPointsPerUncontestedTrump = 7.0/3;
             double expectedPointsPerAce = 6.5/3;
             double expectedPointsPerTrumpAce = 6.0/3;
             double expectedPointsPerTrumpTen = 3.0/3;
             double expectedPointsPerTrumpLeft = 8.0/3;
-
 
             // Adding uncontested trumps
             int pointsInTrump = 0;
@@ -896,5 +886,72 @@ public class Pinochle implements Initializable {
             if(num!=0) r += num;
         }
         return getPermutations(combo) / Math.pow(n, r);
+    }
+
+    /**
+     * Updates meld per team to add to score
+     */
+    private void updateMeldPerTeam() {
+        int trumpSuitIndex = -1;
+        String[] suits = new String[] {"C", "H", "S", "D"};
+        for(int i=0; i<suits.length; i++) {
+            if(trumpSuit.equals(suits[i])) trumpSuitIndex = i;
+        }
+        for(int i=0; i<PLAYERCOUNT; i++) {
+            meldPerTeam[i%2] += players[i].calcMeld()[trumpSuitIndex];
+        }
+        for(int i=0; i<meldPerTeam.length; i++) {
+            if(meldPerTeam[i]<15) meldPerTeam[i] = 0;
+        }
+    }
+
+    private void endBiddingPhase() {
+        setAdvanceButton(true);
+        setBidStackPanes(false);
+        updateMeldPerTeam();
+        layMeld();
+        //updateTricksPerTeam();
+        //updateScores();
+        ((ImageView) trumpSuitIndicatorStackPane.getChildren().get(0)).setImage(new Image(Objects.requireNonNull(Card.class.getResourceAsStream("/images/" + trumpSuit + ".png"))));
+    }
+
+    /**
+     * Updates tricksPerTeam by counting how many points each team pulled
+     * TODO: add tricks phase and update this method
+     */
+    private void updateTricksPerTeam() {
+        int trumpSuitIndex = -1;
+        String[] suits = new String[] {"C", "H", "S", "D"};
+        for(int i=0; i<suits.length; i++) {
+            if(trumpSuit.equals(suits[i])) trumpSuitIndex = i;
+        }
+        for(int i=0; i<PLAYERCOUNT; i++) {
+            tricksPerTeam[i%2] += getExpectedPoints(i)[trumpSuitIndex]-players[i].calcMeld()[trumpSuitIndex]-8;
+        }
+        for(int i=0; i<tricksPerTeam.length; i++) {
+            if(tricksPerTeam[i] < 15) {
+                meldPerTeam[i] = 0;
+                tricksPerTeam[i] = 0;
+            }
+        }
+    }
+
+    /**
+     * Updates scores after each hand
+     */
+    private void updateScores() {
+        for(int i=0; i<PLAYERCOUNT/2; i++) {
+            if(meldPerTeam[i]+tricksPerTeam[i]>bidPerTeam[i]) scores[i] += meldPerTeam[i]+tricksPerTeam[i];
+            else scores[i]-=bidPerTeam[i];
+        }
+        updateScoreLabels();
+    }
+
+    /**
+     * Updates score labels to show new scores
+     */
+    private void updateScoreLabels() {
+        playerTeamScoreLabel.setText(String.valueOf(scores[0]));
+        otherTeamScoreLabel.setText(String.valueOf(scores[1]));
     }
 }

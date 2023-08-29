@@ -379,18 +379,217 @@ public class Player {
     }
 
     /**
+     * Gets the expected points to pull in per suit
+     * @param teammateBid whether teammate has bid
+     * @return points per suit
+     */
+    public int[] getExpectedPoints(boolean teammateBid) {
+        int[] expectedPointsArray = new int[suits.length];
+        int[] cardsInEachSuit = new int[suits.length];
+        for (Card card : hand) {
+            for (int i = 0; i < suits.length; i++) {
+                if (card.getSuit().equals(suits[i])) cardsInEachSuit[i]++;
+            }
+        }
+
+        for(int suit=0; suit<suits.length; suit++) {
+            double expectedPoints = calcMeld()[suit] + 8;
+            if(teammateBid) expectedPoints += 10;
+
+            // Expected points per ways to get points
+            double expectedPointsPerUncontestedTrump = 7.0/3;
+            double expectedPointsPerAce = 6.5/3;
+            double expectedPointsPerTrumpAce = 6.0/3;
+            double expectedPointsPerTrumpTen = 3.0/3;
+            double expectedPointsPerTrumpLeft = 8.0/3;
+
+            // Adding uncontested trumps
+            int pointsInTrump = 0;
+            int kingsInTrump = 0;
+            int tensInTrump = 0;
+            int acesInTrump = 0;
+            for (Card card : hand) {
+                if (card.getSuit().equals(suits[suit])) {
+                    switch (card.getValue()) {
+                        case "K" -> kingsInTrump++;
+                        case "T" -> tensInTrump++;
+                        case "A" -> acesInTrump++;
+                    }
+                }
+            }
+            pointsInTrump += kingsInTrump;
+            if (tensInTrump > 0) pointsInTrump += tensInTrump - 1;
+            int pointsInTrumpUsed = 0;
+            int cardsLeftInTrump = cardsInEachSuit[suit];
+            for (int i = 0; i < suits.length; i++) {
+                if (i != suit) {
+                    ArrayList<int[]> combos = getnCRrCombos(3, 20-cardsInEachSuit[i]);
+                    double expectedUncontestedTrump = 0;
+                    for(int[] combo : combos) {
+                        if(min(combo) > cardsInEachSuit[i]) {
+                            expectedUncontestedTrump += calcp(combo) * (min(combo) - cardsInEachSuit[i]);
+                        }
+                    }
+
+                    if (expectedUncontestedTrump > 0 && pointsInTrump > 0) {
+                        expectedPoints++;
+                        pointsInTrump--;
+                        pointsInTrumpUsed++;
+                    }
+                    if(expectedUncontestedTrump>0) {
+                        expectedPoints += expectedPointsPerUncontestedTrump * (Math.min(cardsInEachSuit[suit], expectedUncontestedTrump));
+                        cardsLeftInTrump -= (int) Math.min(cardsInEachSuit[suit], expectedUncontestedTrump);
+                    }
+                }
+            }
+
+            // Adding aces going through
+            for (int i = 0; i < suits.length; i++) {
+                if (i != suit) {
+                    int aces = 0;
+                    for (Card card : hand) {
+                        if (card.getSuit().equals(suits[i]) && card.getValue().equals("A")) aces++;
+                    }
+                    ArrayList<int[]> combos = getnCRrCombos(3, 20-cardsInEachSuit[i]);
+                    double expectedAcesTaken = 0;
+                    for(int[] combo : combos) {
+                        expectedAcesTaken += calcp(combo) * Math.min(aces, min(combo));
+                    }
+                    expectedPoints += expectedPointsPerAce * expectedAcesTaken;
+                }
+            }
+
+            // Adding remaining high trump cards
+            expectedPoints += expectedPointsPerTrumpAce * Math.min(acesInTrump, cardsLeftInTrump);
+
+            if (pointsInTrumpUsed <= kingsInTrump) expectedPoints += tensInTrump * expectedPointsPerTrumpTen;
+            else expectedPoints += (tensInTrump + kingsInTrump - pointsInTrumpUsed) * expectedPointsPerTrumpTen;
+
+            // Adding remaining trump cards for if player can run everyone else out
+            ArrayList<int[]> combos = getnCRrCombos(3, 20-cardsInEachSuit[suit]);
+            double trumpsLeft = 0;
+            for(int[] combo : combos) {
+                if(max(combo) < cardsInEachSuit[suit]) {
+                    trumpsLeft += calcp(combo) * (cardsInEachSuit[suit] - max(combo));
+                }
+            }
+
+            expectedPoints += expectedPointsPerTrumpLeft * trumpsLeft;
+
+            // Adding 2 for last trick
+            if ((acesInTrump >= 2 && cardsInEachSuit[suit] >= 4) || (acesInTrump >= 1 && cardsInEachSuit[suit] >= 6) || trumpsLeft > 0) expectedPoints += 2;
+
+            expectedPointsArray[suit] = (int) Math.round(expectedPoints);
+        }
+        return expectedPointsArray;
+    }
+
+    /**
+     * Calculates n!
+     * @param n n
+     * @return n!
+     */
+    private long factorial(int n) {
+        if(n<=1)
+            return 1;
+        return n*factorial(n-1);
+    }
+
+    /**
+     * Calculates amount of permutations for each combination of numbers
+     * @param combo combination to count perms
+     * @return amount of perms
+     */
+    private double getPermutations(int[] combo) {
+        double permutations=1;
+        int add = 0;
+        for(int i : combo) {
+            add+=i;
+            permutations/=factorial(i);
+        }
+        permutations*=factorial(add);
+        return permutations;
+    }
+
+    /**
+     * Calculates the probability of getting each permutation
+     * @param combo combo to calculate
+     * @return p
+     */
+    private double calcp(int[] combo) {
+        int n=combo.length;
+        int r = 0;
+        for(int num : combo) {
+            if(num!=0) r += num;
+        }
+        return getPermutations(combo) / Math.pow(n, r);
+    }
+
+    /**
+     * Gets the max of an array
+     * @param nums array to get max
+     * @return max number
+     */
+    private int max(int[] nums) {
+        int max = nums[0];
+        for(int i : nums) {
+            max = Math.max(max, i);
+        }
+        return max;
+    }
+
+    /**
+     * Gets the min of an array
+     * @param nums array to get min
+     * @return min number
+     */
+    private int min(int[] nums) {
+        int min = nums[0];
+        for(int i : nums) {
+            min = Math.min(min, i);
+        }
+        return min;
+    }
+
+    /**
+     * Gets all combinations of nCRr (combination with replacement)
+     * @param n n
+     * @param r r
+     * @return all combinations
+     */
+    private ArrayList<int[]> getnCRrCombos(int n, int r) {
+        ArrayList<int[]> nCRrCombos = new ArrayList<>();
+        if(r==0) {
+            int[] combo = new int[n];
+            nCRrCombos.add(combo);
+        } else if(n==1) {
+            int[] combo = new int[n];
+            combo[0] = r;
+            nCRrCombos.add(combo);
+        } else {
+            for(int i=0; i<=r; i++) {
+                for(int[] append : getnCRrCombos(n-1, i)) {
+                    int[] combo = new int[n];
+                    combo[n - 1] = r-i;
+                    System.arraycopy(append, 0, combo, 0, append.length);
+                    nCRrCombos.add(combo);
+                }
+            }
+        }
+        return nCRrCombos;
+    }
+
+    /**
      * Provides string representation of Player class
      * @return string
      */
     @Override
     public String toString() {
         StringBuilder ret = new StringBuilder();
-        for (Card card : hand) {
-            ret.append(card.toString()).append("  ");
-        }
-        ret.append("\n");
-        for (int meld : calcMeld()) {
-            ret.append(meld).append("  ");
+        ret.append("Your meld:\n");
+        String[] fullSuits = new String[] {"Clubs", "Hearts", "Spades", "Diamonds"};
+        for(int i=0; i<suits.length; i++) {
+            ret.append(fullSuits[i]).append(": ").append(calcMeld()[i]).append("\n");
         }
         return ret + "\n";
     }

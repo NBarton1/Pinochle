@@ -241,9 +241,9 @@ public class Pinochle implements Initializable {
 
         for (int i = 0; i < PLAYERCOUNT; i++) {
             players[i].setHand(deal[i]);
-            System.out.println(players[i]);
         }
 
+        System.out.println(players[0]);
         setCards();
         for(int i=0; i<playerCardsHBOX.getChildren().size(); i++) {
             setImageViewUserData(i);
@@ -298,13 +298,19 @@ public class Pinochle implements Initializable {
     void startBid(ActionEvent event) {
         setBidActionsGrid();
         setBidStackPanes(true);
-        advanceButton.setOnAction(this::startHand);
-        advanceButton.setText("New Deal");
+        advanceButton.setOnAction(this::meldPhase);
+        advanceButton.setText("To Meld");
         setAdvanceButton(false);
         setBidLabels();
         isBidding = new int[] {0, 0, 0, 0};
         bidAtLeastOnce = new boolean[] {false, false, false, false};
         endBiddingPhase = false;
+        for(int i=0; i<PLAYERCOUNT; i++) {
+            for(int j : players[i].getExpectedPoints(bidAtLeastOnce[(i+2)%4])) {
+                System.out.print(j + "  ");
+            }
+            System.out.println();
+        }
         bid(false, false, false);
     }
 
@@ -475,46 +481,49 @@ public class Pinochle implements Initializable {
      * @param playerHasBid whether the player bid
      */
     private void bid(boolean startComputersAtStart, boolean playerTurn, boolean playerHasBid) {
+        if (!endBiddingPhase) {
+            int bidder = 1;
+            if (!startComputersAtStart)
+                bidder += dealer;
 
-        int bidder = 1;
-        if (!startComputersAtStart)
-            bidder += dealer;
-
-        // Human player
-        if (playerTurn) {
-            if (playerHasBid) {
-                playerBidLabel.setText("Bid: " + bid);
-                isBidding[0] = 1;
-                bidAtLeastOnce[0] = true;
-                if (bid != 50) {
-                    bid += 2;
-                    if (bid > 60)
-                        bid += 3;
-                }
-            } else {
-                isBidding[0] = -1;
-                playerBidLabel.setText("Pass!");
-                if (biddersLeft() == 0) {
-                    setAdvanceButton(true);
-                    scores[0] -= 50;
-                    playerTeamScoreLabel.setText(String.valueOf(scores[0]));
+            // Human player
+            if (playerTurn) {
+                if (playerHasBid) {
+                    playerBidLabel.setText("Bid: " + bid);
+                    isBidding[0] = 1;
+                    bidAtLeastOnce[0] = true;
+                    if (bid != 50) {
+                        bid += 2;
+                        if (bid > 60)
+                            bid += 3;
+                    }
+                } else {
+                    isBidding[0] = -1;
+                    playerBidLabel.setText("Pass!");
+                    if (biddersLeft() == 0) {
+                        advanceButton.setText("New Deal");
+                        advanceButton.setOnAction(this::startHand);
+                        setAdvanceButton(true);
+                        scores[0] -= 50;
+                        playerTeamScoreLabel.setText(String.valueOf(scores[0]));
+                    }
                 }
             }
-        }
 
-        int biddersLeft = 0;
-        Timeline time = new Timeline();
-        for (int i = bidder; i < PLAYERCOUNT; i++) {
-            int finalI = i;
-            if (isBidding[i] != -1) {
-                biddersLeft++;
-                time.getKeyFrames().add(new KeyFrame(Duration.seconds(biddersLeft), e -> computerBid(finalI)));
+            int biddersLeft = 0;
+            Timeline time = new Timeline();
+            for (int i = bidder; i < PLAYERCOUNT; i++) {
+                int finalI = i;
+                if (isBidding[i] != -1) {
+                    biddersLeft++;
+                    time.getKeyFrames().add(new KeyFrame(Duration.seconds(biddersLeft), e -> computerBid(finalI)));
+                }
             }
+            time.getKeyFrames().add(new KeyFrame(Duration.seconds(1), (KeyValue) null));
+            time.playFromStart();
+            if (isBidding[0] != -1 || biddersLeft <= 1) time.setOnFinished(e -> editBidActionsGrid());
+            else time.setOnFinished(e -> bid(true, false, false));
         }
-        time.getKeyFrames().add(new KeyFrame(Duration.seconds(1), (KeyValue) null));
-        time.playFromStart();
-        if (isBidding[0] != -1 || biddersLeft <= 1) time.setOnFinished(e -> editBidActionsGrid());
-        else time.setOnFinished(e -> bid(true, false, false));
     }
 
     /**
@@ -597,7 +606,7 @@ public class Pinochle implements Initializable {
 
         if(isBidding[bidder]==0 && biddersLeft()==1) bid = 50; // Bid dropped on computer
 
-        int max = max(getExpectedPoints(bidder));
+        int max = max(players[bidder].getExpectedPoints(bidAtLeastOnce[(bidder+2)%4]));
         boolean hasBid = bid<=max;
         if(isBidding[bidder]!=-1 && hasBid && biddersLeft()>1) { // Computer bidding
             isBidding[bidder] = 1;
@@ -611,6 +620,8 @@ public class Pinochle implements Initializable {
                 if(bid<=60) bid-=2;
                 else bid-=5;
             }
+            assert label != null;
+            label.setText("Bid: " + bid);
             bidPerTeam[bidder%2] = bid;
             endBiddingPhase = true;
             computerWonBid(bidder);
@@ -625,6 +636,8 @@ public class Pinochle implements Initializable {
             isBidding[bidder] = -1;
             assert label != null;
             label.setText("Pass!");
+            advanceButton.setOnAction(this::startHand);
+            advanceButton.setText("New Deal");
         } else { // Computer passes
             isBidding[bidder] = -1;
             assert label != null;
@@ -659,7 +672,7 @@ public class Pinochle implements Initializable {
      */
     private void computerWonBid(int bidder) {
         String[] suits = new String[]{"C", "H", "S", "D"};
-        int[] expectedPoints = getExpectedPoints(bidder);
+        int[] expectedPoints = players[bidder].getExpectedPoints(bidAtLeastOnce[(bidder+2)%4]);
         int max = max(expectedPoints);
         for (int i = 0; i < PLAYERCOUNT; i++) {
             if (expectedPoints[i] == max) trumpSuit = suits[i];
@@ -686,114 +699,6 @@ public class Pinochle implements Initializable {
     }
 
     /**
-     * Gets the expected points to pull in per suit
-     * @param player player whose hand to calculate
-     * @return points per suit
-     */
-    private int[] getExpectedPoints(int player) {
-        int[] expectedPointsArray = new int[PLAYERCOUNT];
-        Card[] hand = players[player].getHand();
-        String[] suits = new String[] {"C", "H", "S", "D"};
-        int[] cardsInEachSuit = new int[suits.length];
-        for (Card card : hand) {
-            for (int i = 0; i < suits.length; i++) {
-                if (card.getSuit().equals(suits[i])) cardsInEachSuit[i]++;
-            }
-        }
-
-        for(int suit=0; suit<suits.length; suit++) {
-            double expectedPoints = players[player].calcMeld()[suit] + 8;
-            if(bidAtLeastOnce[(player+2)%4]) expectedPoints += 10;
-
-            // Expected points per ways to get points
-            double expectedPointsPerUncontestedTrump = 7.0/3;
-            double expectedPointsPerAce = 6.5/3;
-            double expectedPointsPerTrumpAce = 6.0/3;
-            double expectedPointsPerTrumpTen = 3.0/3;
-            double expectedPointsPerTrumpLeft = 8.0/3;
-
-            // Adding uncontested trumps
-            int pointsInTrump = 0;
-            int kingsInTrump = 0;
-            int tensInTrump = 0;
-            int acesInTrump = 0;
-            for (Card card : hand) {
-                if (card.getSuit().equals(suits[suit])) {
-                    switch (card.getValue()) {
-                        case "K" -> kingsInTrump++;
-                        case "T" -> tensInTrump++;
-                        case "A" -> acesInTrump++;
-                    }
-                }
-            }
-            pointsInTrump += kingsInTrump;
-            if (tensInTrump > 0) pointsInTrump += tensInTrump - 1;
-            int pointsInTrumpUsed = 0;
-            int cardsLeftInTrump = cardsInEachSuit[suit];
-            for (int i = 0; i < suits.length; i++) {
-                if (i != suit) {
-                    ArrayList<int[]> combos = getnCRrCombos(3, 20-cardsInEachSuit[i]);
-                    double expectedUncontestedTrump = 0;
-                    for(int[] combo : combos) {
-                        if(min(combo) > cardsInEachSuit[i]) {
-                            expectedUncontestedTrump += calcp(combo) * (min(combo) - cardsInEachSuit[i]);
-                        }
-                    }
-
-                    if (expectedUncontestedTrump > 0 && pointsInTrump > 0) {
-                        expectedPoints++;
-                        pointsInTrump--;
-                        pointsInTrumpUsed++;
-                    }
-                    if(expectedUncontestedTrump>0) {
-                        expectedPoints += expectedPointsPerUncontestedTrump * (Math.min(cardsInEachSuit[suit], expectedUncontestedTrump));
-                        cardsLeftInTrump -= (int) Math.min(cardsInEachSuit[suit], expectedUncontestedTrump);
-                    }
-                }
-            }
-
-            // Adding aces going through
-            for (int i = 0; i < suits.length; i++) {
-                if (i != suit) {
-                    int aces = 0;
-                    for (Card card : hand) {
-                        if (card.getSuit().equals(suits[i]) && card.getValue().equals("A")) aces++;
-                    }
-                    ArrayList<int[]> combos = getnCRrCombos(3, 20-cardsInEachSuit[i]);
-                    double expectedAcesTaken = 0;
-                    for(int[] combo : combos) {
-                        expectedAcesTaken += calcp(combo) * Math.min(aces, min(combo));
-                    }
-                    expectedPoints += expectedPointsPerAce * expectedAcesTaken;
-                }
-            }
-
-            // Adding remaining high trump cards
-            expectedPoints += expectedPointsPerTrumpAce * Math.min(acesInTrump, cardsLeftInTrump);
-
-            if (pointsInTrumpUsed <= kingsInTrump) expectedPoints += tensInTrump * expectedPointsPerTrumpTen;
-            else expectedPoints += (tensInTrump + kingsInTrump - pointsInTrumpUsed) * expectedPointsPerTrumpTen;
-
-            // Adding remaining trump cards for if player can run everyone else out
-            ArrayList<int[]> combos = getnCRrCombos(3, 20-cardsInEachSuit[suit]);
-            double trumpsLeft = 0;
-            for(int[] combo : combos) {
-                if(max(combo) < cardsInEachSuit[suit]) {
-                    trumpsLeft += calcp(combo) * (cardsInEachSuit[suit] - max(combo));
-                }
-            }
-
-            expectedPoints += expectedPointsPerTrumpLeft * trumpsLeft;
-
-            // Adding 2 for last trick
-            if ((acesInTrump >= 2 && cardsInEachSuit[suit] >= 4) || (acesInTrump >= 1 && cardsInEachSuit[suit] >= 6) || trumpsLeft > 0) expectedPoints += 2;
-
-            expectedPointsArray[suit] = (int) Math.round(expectedPoints);
-        }
-        return expectedPointsArray;
-    }
-
-    /**
      * Gets the max of an array
      * @param nums array to get max
      * @return max number
@@ -807,91 +712,11 @@ public class Pinochle implements Initializable {
     }
 
     /**
-     * Gets the min of an array
-     * @param nums array to get min
-     * @return min number
-     */
-    private int min(int[] nums) {
-        int min = nums[0];
-        for(int i : nums) {
-            min = Math.min(min, i);
-        }
-        return min;
-    }
-
-    /**
-     * Gets all combinations of nCRr (combination with replacement)
-     * @param n n
-     * @param r r
-     * @return all combinations
-     */
-    private ArrayList<int[]> getnCRrCombos(int n, int r) {
-        ArrayList<int[]> nCRrCombos = new ArrayList<>();
-        if(r==0) {
-            int[] combo = new int[n];
-            nCRrCombos.add(combo);
-        } else if(n==1) {
-            int[] combo = new int[n];
-            combo[0] = r;
-            nCRrCombos.add(combo);
-        } else {
-            for(int i=0; i<=r; i++) {
-                for(int[] append : getnCRrCombos(n-1, i)) {
-                    int[] combo = new int[n];
-                    combo[n - 1] = r-i;
-                    System.arraycopy(append, 0, combo, 0, append.length);
-                    nCRrCombos.add(combo);
-                }
-            }
-        }
-        return nCRrCombos;
-    }
-
-    /**
-     * Calculates n!
-     * @param n n
-     * @return n!
-     */
-    private long factorial(int n) {
-        if(n<=1)
-            return 1;
-        return n*factorial(n-1);
-    }
-
-    /**
-     * Calculates amount of permutations for each combination of numbers
-     * @param combo combination to count perms
-     * @return amount of perms
-     */
-    private double getPermutations(int[] combo) {
-        double permutations=1;
-        int add = 0;
-        for(int i : combo) {
-            add+=i;
-            permutations/=factorial(i);
-        }
-        permutations*=factorial(add);
-        return permutations;
-    }
-
-    /**
-     * Calculates the probability of getting each permutation
-     * @param combo combo to calculate
-     * @return p
-     */
-    private double calcp(int[] combo) {
-        int n=combo.length;
-        int r = 0;
-        for(int num : combo) {
-            if(num!=0) r += num;
-        }
-        return getPermutations(combo) / Math.pow(n, r);
-    }
-
-    /**
      * Updates meld per team to add to score
+     * @return true - team that bid has >=15 meld (play hand)
+     *        false - team that bid has <15 meld (throw in)
      */
-    private void updateMeldPerTeam() {
+    private boolean updateMeldPerTeam() {
         int trumpSuitIndex = -1;
         String[] suits = new String[] {"C", "H", "S", "D"};
         for(int i=0; i<suits.length; i++) {
@@ -900,9 +725,21 @@ public class Pinochle implements Initializable {
         for(int i=0; i<PLAYERCOUNT; i++) {
             meldPerTeam[i%2] += players[i].calcMeld()[trumpSuitIndex];
         }
+        advanceButton.setText("Sim Hand");
         for(int i=0; i<meldPerTeam.length; i++) {
-            if(meldPerTeam[i]<15) meldPerTeam[i] = 0;
+            if(meldPerTeam[i]<15) {
+                meldPerTeam[i] = 0;
+                if(bidPerTeam[i]==bid) {
+                    scores[i] -= bid;
+                    scores[(i+1)%2] += meldPerTeam[(i+1)%2];
+                    updateScoreLabels();
+                    advanceButton.setText("New Deal");
+                    advanceButton.setOnAction(this::startHand);
+                    return false;
+                }
+            }
         }
+        return true;
     }
 
     /**
@@ -910,11 +747,6 @@ public class Pinochle implements Initializable {
      */
     private void endBiddingPhase() {
         setAdvanceButton(true);
-        setBidStackPanes(false);
-        updateMeldPerTeam();
-        layMeld();
-        updateTricksPerTeam();
-        updateScores();
         ((ImageView) trumpSuitIndicatorStackPane.getChildren().get(0)).setImage(new Image(Objects.requireNonNull(Card.class.getResourceAsStream("/images/" + trumpSuit + ".png"))));
     }
 
@@ -929,7 +761,7 @@ public class Pinochle implements Initializable {
             if(trumpSuit.equals(suits[i])) trumpSuitIndex = i;
         }
         for(int i=0; i<PLAYERCOUNT; i++) {
-            tricksPerTeam[i%2] += getExpectedPoints(i)[trumpSuitIndex]-players[i].calcMeld()[trumpSuitIndex]-8;
+            tricksPerTeam[i%2] += players[i].getExpectedPoints(bidAtLeastOnce[(i+2)%4])[trumpSuitIndex]-players[i].calcMeld()[trumpSuitIndex]-8;
         }
         for(int i=0; i<tricksPerTeam.length; i++) {
             if(tricksPerTeam[i] < 15) {
@@ -956,5 +788,16 @@ public class Pinochle implements Initializable {
     private void updateScoreLabels() {
         playerTeamScoreLabel.setText(String.valueOf(scores[0]));
         otherTeamScoreLabel.setText(String.valueOf(scores[1]));
+    }
+
+    private void meldPhase(ActionEvent event) {
+        System.out.println(bid);
+        setBidStackPanes(false);
+        layMeld();
+        if (updateMeldPerTeam()) {
+            updateTricksPerTeam();
+            updateScores();
+        }
+        advanceButton.setOnAction(this::startHand);
     }
 }

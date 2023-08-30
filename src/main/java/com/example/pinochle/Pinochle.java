@@ -10,178 +10,129 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.transform.Rotate;
 import javafx.util.Duration;
 
 import java.net.URL;
 import java.util.*;
 
-/**
- * Main place where things happen
- */
 public class Pinochle implements Initializable {
 
-    /**
-     * Pass/Bid
-     */
-    @FXML
-    private GridPane bidActionsGrid;
-    /**
-     * Advances to next stage on click
-     */
     @FXML
     private Button advanceButton;
-    /**
-     * Cards of opponent 1
-     */
+
     @FXML
-    private VBox opponent1VBox;
-    /**
-     * Cards of opponent 2
-     */
+    private GridPane bidActionsGrid;
+
     @FXML
-    private VBox opponent2VBox;
-    /**
-     * Other team's score label
-     */
-    @FXML
-    private Label otherTeamScoreLabel;
-    /**
-     * Player bid/pass label
-     */
-    @FXML
-    private Label playerBidLabel;
-    /**
-     * Player cards container
-     */
-    @FXML
-    private HBox playerCardsHBOX;
-    /**
-     * Player team's score label
-     */
-    @FXML
-    private Label playerTeamScoreLabel;
-    /**
-     * Where scores are shown
-     */
-    @FXML
-    private GridPane scoresGridPane;
-    /**
-     * Suits for picking trump
-     */
-    @FXML
-    private GridPane suitsGrid;
-    /**
-     * Teammate cards
-     */
-    @FXML
-    private HBox teammateHBox;
-    /**
-     * Starts game on click
-     */
-    @FXML
-    private Button welcomeButton;
-    /**
-     * Just to look nice
-     */
-    @FXML
-    private Group welcomeImageGroup;
-    /**
-     * Welcome!
-     */
-    @FXML
-    private Label welcomeLabel;
-    /**
-     * Where meld is laid
-     */
-    @FXML
-    private Group playersMeldsGroup;
-    /**
-     * Where bids are shown
-     */
+    private Group bidPhaseGroup;
+
     @FXML
     private Group bidStackPanesGroup;
-    /**
-     * Shows trump suit
-     */
-    @FXML
-    private StackPane trumpSuitIndicatorStackPane;
-    /**
-     * Shows dealer
-     */
+
     @FXML
     private Group dealerChipsGroup;
-    /**
-     * Blocks user clicks
-     */
+
     @FXML
-    private Pane blockPane;
+    private Group handsGroup;
+
+    @FXML
+    private Group inGameGroup;
+
+    @FXML
+    private Group meldPhaseGroup;
+
+    @FXML
+    private Group playersMeldsGroup;
+
+    @FXML
+    private GridPane scoresGridPane;
+
+    @FXML
+    private GridPane suitsGrid;
+
+    @FXML
+    private ImageView trumpSuitIndicator;
+
+    @FXML
+    private Group welcomeGroup;
 
 
     /**
-     * Amount of players
+     * Constant player count (4)
      */
     private int PLAYERCOUNT;
     /**
-     * Image of back of card
+     * Constant Image ("/images/back.png")
      */
     private Image BACK;
     /**
-     * Array of players
+     * Array of players (Size 4)
      */
     private Player[] players;
-    /**
-     * Images for each card in player's hand
-     */
-    private ImageView[] playerCardImages;
     /**
      * Deck of cards object
      */
     private Deck deck;
     /**
-     * Array of scores
+     * Constant suits {"C", "H", "S", "D"}
      */
-    private int[] scores;
-    /**
-     * Trump suit of the hand
-     */
-    private String trumpSuit;
+    private String[] suits;
     /**
      * Dealer of the hand
      */
     private int dealer;
     /**
-     * An array of actions players took in bidding phase
+     * Scores per team
      */
-    private int[] isBidding;
+    private int[] scores;
     /**
-     * An array to store which players were competing in bidding phase at some point
-     */
-    private boolean[] bidAtLeastOnce;
-    /**
-     * Current bid amount
-     */
-    private int bid;
-    /**
-     * Indicator of when bidding phase ends
-     */
-    private boolean endBiddingPhase;
-    /**
-     * What each team bid per hand
+     * Bid per team (either bid or 0 because only one team can win the bid)
      */
     private int[] bidPerTeam;
     /**
-     * How much meld each team has per hand
+     * Meld per team
      */
     private int[] meldPerTeam;
     /**
-     * How many tricks each team pulled per hand
+     * Tricks pulled per team
      */
     private int[] tricksPerTeam;
+    /**
+     * Trump suit of the hand
+     */
+    private String trumpSuit;
+    /**
+     * Bid amount of the hand
+     */
+    private int bid;
+    /**
+     * An array of which players remain in the bid
+     * -1 - passed
+     *  0 - has not bid nor passed
+     *  1 - bidding
+     */
+    private int[] isBidding;
+    /**
+     * An array of which players have bid at least once
+     *  true - bid at least once
+     * false - passed on first turn
+     */
+    private boolean[] bidAtLeastOnce;
+    /**
+     * What the user decides to do on their turn to bid
+     */
+    private int bidAction;
+    /**
+     * Condition for when to end bidding phase
+     */
+    private boolean endBiddingPhase;
+
 
     /**
-     * Starts the program
-     * @param url given
-     * @param resourceBundle given
+     * Initializes the graphics
+     * @param url URL object
+     * @param resourceBundle ResourceBundle object
      */
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -189,325 +140,137 @@ public class Pinochle implements Initializable {
     }
 
     /**
-     * Starts the game!
-     */
-    @FXML
-    void startGame() {
-        welcomeButton.setDisable(true);
-        welcomeButton.setVisible(false);
-
-        welcomeImageGroup.setDisable(true);
-        welcomeImageGroup.setVisible(false);
-
-        welcomeLabel.setDisable(true);
-        welcomeLabel.setVisible(false);
-
-        advanceButton.setDisable(false);
-        advanceButton.setVisible(true);
-
-        scoresGridPane.setDisable(false);
-        scoresGridPane.setVisible(true);
-
-        startHand();
-    }
-
-    /**
-     * Initializes variables
+     * Gets the variables needed to start the game
      */
     private void getVariables() {
         dealer = 0;
         PLAYERCOUNT = 4;
-        scores = new int[] {0, 0};
+        scores = new int[]{0, 0};
         BACK = new Image(Objects.requireNonNull(Card.class.getResourceAsStream("/images/back.png")));
         deck = new Deck();
-        players = new Player[PLAYERCOUNT];
-        for (int i = 0; i < PLAYERCOUNT; i++) {
-            players[i] = new Player();
-        }
+        suits = new String[]{"C", "H", "S", "D"};
+        getPlayers();
+
+        rotateSideCards();
     }
 
     /**
-     * Deals the cards and sets images of them
-     */
-    private void deal() {
-        clearHBox(playerCardsHBOX);
-        clearVBox(opponent1VBox);
-        clearHBox(teammateHBox);
-        clearVBox(opponent2VBox);
-
-        dealerChipsGroup.getChildren().get(dealer).setVisible(true);
-
-        Card[][] deal = deck.deal();
-
-        for (int i = 0; i < PLAYERCOUNT; i++) {
-            players[i].setHand(deal[i]);
-        }
-
-        System.out.println(players[0]);
-        setCards();
-        for(int i=0; i<playerCardsHBOX.getChildren().size(); i++) {
-            setImageViewUserData(i);
-        }
-        getPlayerCardImages();
-        setTrumpSuitIndicatorStackPane();
-    }
-
-    /**
-     * Starts the hand by dealing and appropriately setting images
-     */
-    private void startHand() {
-        bidPerTeam = new int[] {0, 0};
-        meldPerTeam = new int[] {0, 0};
-        tricksPerTeam = new int[] {0, 0};
-
-        for(int i=0; i<playersMeldsGroup.getChildren().size(); i++) {
-            VBox parent = (VBox) playersMeldsGroup.getChildren().get(i);
-            for (int j = 0; j< Objects.requireNonNull(parent).getChildren().size(); j++) {
-                HBox subbox = (HBox) parent.getChildren().get(j);
-                for(int k=0; k<subbox.getChildren().size(); k++) {
-                    ((ImageView) subbox.getChildren().get(k)).setImage(null);
-                }
-            }
-        }
-        deal();
-        setAdvanceButton(true);
-        setBidStackPanes(false);
-        ((ImageView) trumpSuitIndicatorStackPane.getChildren().get(0)).setImage(null);
-        advanceButton.setOnAction(this::startBid);
-        advanceButton.setText("To Bid");
-        bid = 52;
-    }
-
-    /**
-     * Starts a new hand
-     * @param event button click
+     * Prepares the graphics for the game to start
      */
     @FXML
-    void startHand(ActionEvent event) {
-        dealer = (dealer+1)%4;
-        dealerChipsGroup.getChildren().get((dealer+3)%4).setVisible(false);
-        dealerChipsGroup.getChildren().get(dealer).setVisible(true);
+    void startGame() {
+        activate(welcomeGroup, false);
+        activate(inGameGroup, true);
         startHand();
     }
 
     /**
-     * Starts bid phase
-     * @param event button click
+     * Sets advanceButton to start a new hand on click
      */
-    @FXML
-    void startBid(ActionEvent event) {
+    void toStartHand() {
+        activate(advanceButton, true);
+        advanceButton.setText("New Deal");
+        advanceButton.setOnAction(this::startHand);
+    }
+
+    /**
+     * Starts a new hand
+     */
+    private void startHand() {
+        bidPerTeam = new int[]{0, 0};
+        meldPerTeam = new int[]{0, 0};
+        tricksPerTeam = new int[]{0, 0};
+
+        toDealPhase();
+    }
+
+    /**
+     * Starts a new hand on clicking advanceButton
+     * @param event Click
+     */
+    private void startHand(ActionEvent event) {
+        startHand();
+    }
+
+    /**
+     * Sets up the deal phase
+     */
+    private void toDealPhase() {
+        resetGroups();
+        trumpSuitIndicator.setImage(null);
+        activate(bidPhaseGroup, false);
+        activate(meldPhaseGroup, false);
+
+        dealPhase();
+    }
+
+    /**
+     * Dealing the cards and setting the graphics
+     */
+    private void dealPhase() {
+        showDealerChip();
+
+        dealCards();
+        setCards();
+
+        System.out.println(players[0]);
+
+        toBidPhase();
+    }
+
+    /**
+     * Sets up advanceButton to advance to the bid phase on click
+     */
+    private void toBidPhase() {
+        activate(advanceButton, true);
+        advanceButton.setOnAction(this::bidPhase);
+        advanceButton.setText("To Bid");
+    }
+
+    /**
+     * Starts the bid phase on clicking advanceButton
+     * @param event Click
+     */
+    void bidPhase(ActionEvent event) {
+        activate(bidPhaseGroup, true);
+        activate(advanceButton, false);
         setBidActionsGrid();
-        setBidStackPanes(true);
-        advanceButton.setOnAction(this::meldPhase);
-        advanceButton.setText("To Meld");
-        setAdvanceButton(false);
         setBidLabels();
-        isBidding = new int[] {0, 0, 0, 0};
-        bidAtLeastOnce = new boolean[] {false, false, false, false};
+        bid = 52;
+        bidAction = -1;
+        isBidding = new int[]{0, 0, 0, 0};
+        bidAtLeastOnce = new boolean[]{false, false, false, false};
         endBiddingPhase = false;
-        for(int i=0; i<PLAYERCOUNT; i++) {
-            for(int j : players[i].getExpectedPoints(bidAtLeastOnce[(i+2)%4])) {
-                System.out.print(j + "  ");
-            }
-            System.out.println();
-        }
-        bid(false, false, false);
+
+        bid();
+
+        dealer = (dealer + 1) % 4;
     }
 
     /**
-     * Gets an ArrayList of images to easily access them
+     * The bidding process
      */
-    private void getPlayerCardImages() {
-        playerCardImages = new ImageView[20];
-        for(int i = 0; i< playerCardsHBOX.getChildren().size(); i++) {
-            playerCardImages[i] = (ImageView) playerCardsHBOX.getChildren().get(i);
-        }
-    }
-
-    /**
-     * Sets data to an ImageView so that it can be accessed when clicked
-     * @param i data to input
-     */
-    private void setImageViewUserData(int i) {
-        ImageView imageView = (ImageView) playerCardsHBOX.getChildren().get(i);
-        imageView.setUserData(i);
-
-        imageView.setOnMouseClicked(event -> playCard((int) imageView.getUserData()));
-    }
-
-    /**
-     * ON CLICKING A CARD: if card is legal to play, play the card and remove it from the hand and sort the hand.
-     * TODO: all of that
-     * @param i card clicked
-     */
-    private void playCard(int i) {
-        //players[0].playCard(i);
-
-        playerCardImages[i].setImage(null);
-
-        //TranslateTransition transition = new TranslateTransition(Duration.seconds(1), toMove);
-        //transition.setByX(-17*(i-10));
-        //transition.setByY(-100);
-        //transition.play();
-        //transition.setOnFinished(e -> );
-
-        toCenter();
-    }
-
-    /**
-     * Centers cards after clicking one
-     */
-    private void toCenter() {
-        int nullCounter = 0;
-        ArrayList<Image> notNull = new ArrayList<>();
-        int size = playerCardImages.length;
-        for (ImageView playerCardImage : playerCardImages) {
-            if (playerCardImage.getImage() != null)
-                notNull.add(playerCardImage.getImage());
-            else nullCounter++;
-        }
-        int index = 0;
-        for(int i=0; i<size; i++) {
-            if(i<nullCounter/2 || i>=20-Math.round((double) nullCounter/2))
-                playerCardImages[i].setImage(null);
-            else {
-                playerCardImages[i].setImage(notNull.get(index));
-                setImageViewUserData(index);
-                index++;
-            }
-        }
-    }
-
-    /**
-     * Clears all children from Vbox
-     * @param parent VBox to clear
-     */
-    private void clearVBox(VBox parent) {
-        parent.getChildren().clear();
-    }
-
-    /**
-     * Clears all children from HBox
-     * @param parent HBox to clear
-     */
-    private void clearHBox(HBox parent) {
-        parent.getChildren().clear();
-    }
-
-    /**
-     * Takes empty Hbox and Vbox and fills them with cards according to who they are
-     */
-    private void setCards() {
-        for(int i=0; i<20; i++) {
-            playerCardsHBOX.getChildren().add(buildChild(players[0].getHand()[i].getImage(), 57, 79, -40*(i+1.5), 0, 0));
-            opponent1VBox.getChildren().add(buildChild(BACK, 30, 49, 0, -42*(i), 90));
-            teammateHBox.getChildren().add(buildChild(BACK, 30, 49, -23*(i-2), 0, 0));
-            opponent2VBox.getChildren().add(buildChild(BACK, 30, 49, 0, -42*(i), 90));
-        }
-    }
-
-    /**
-     * Takes a bunch of parameters and builds a child for a HBox or Vbox
-     * @param image image to put in child
-     * @param x width
-     * @param y height
-     * @param dx translation in x direction
-     * @param dy translation in y direction
-     * @param rot rotation angle in degrees
-     * @return result of the child
-     */
-    private ImageView buildChild(Image image, double x, double y, double dx, double dy, double rot) {
-        ImageView imageView = new ImageView(image);
-        imageView.setFitWidth(x);
-        imageView.setFitHeight(y);
-        imageView.setTranslateX(dx);
-        imageView.setTranslateY(dy);
-        imageView.setRotate(rot);
-
-        return imageView;
-    }
-
-    /**
-     * Sets the grid used to pick trump suit
-     * @param on show/hide
-     */
-    private void setSuitsGrid(boolean on) {
-        for(int i=0; i<suitsGrid.getChildren().size(); i++) {
-            ImageView imageView = (ImageView) suitsGrid.getChildren().get(i);
-            imageView.setUserData(i);
-            imageView.setOnMouseClicked(event -> pickSuit((int) imageView.getUserData()));
-        }
-        suitsGrid.setVisible(on);
-        suitsGrid.setDisable(!on);
-        if(on) suitsGrid.toFront();
-        else suitsGrid.toBack();
-    }
-
-    /**
-     * On click, determine which suit is trump for this hand
-     * @param i clicked, which to use as index for suits
-     */
-    private void pickSuit(int i) {
-        String[] suits = new String[] {"S", "C", "H", "D"};
-        trumpSuit = suits[i];
-        setSuitsGrid(false);
-        endBiddingPhase();
-    }
-
-    /**
-     * Lays all players' meld on the table
-     */
-    private void layMeld() {
-        for(int i=0; i<playersMeldsGroup.getChildren().size(); i++) {
-            VBox parent = (VBox) playersMeldsGroup.getChildren().get(i);
-            ArrayList<String> meldCards = getMeldCards(players[i].getMeldCardsHashMap(trumpSuit));
-            for (int j = 0; j < Objects.requireNonNull(parent).getChildren().size(); j++) {
-                HBox subBox = (HBox) parent.getChildren().get(j);
-                clearHBox(subBox);
-                for (int k = 0; k < 5; k++) {
-                    if (5 * j + k < meldCards.size()) {
-                        Image image = new Image(Objects.requireNonNull(Card.class.getResourceAsStream("/images/" + meldCards.get(5 * j + k) + ".png")));
-                        subBox.getChildren().add(buildChild(image, 45, 70, -35 * k, -50 * j, 0));
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Bidding phase
-     * @param startComputersAtStart whether to start the cpu bids from the player's left
-     * @param playerTurn whether it is the player's turn
-     * @param playerHasBid whether the player bid
-     */
-    private void bid(boolean startComputersAtStart, boolean playerTurn, boolean playerHasBid) {
+    private void bid() {
         if (!endBiddingPhase) {
             int bidder = 1;
-            if (!startComputersAtStart)
+            if (isBidding[0] == 0)
                 bidder += dealer;
 
             // Human player
-            if (playerTurn) {
-                if (playerHasBid) {
-                    playerBidLabel.setText("Bid: " + bid);
-                    isBidding[0] = 1;
-                    bidAtLeastOnce[0] = true;
+            if (bidAction != -1) {
+                if (bidAction == 0) {
+                    choseToBid(0);
                     if (bid != 50) {
-                        bid += 2;
-                        if (bid > 60)
-                            bid += 3;
+                        increaseBid();
                     }
                 } else {
-                    isBidding[0] = -1;
-                    playerBidLabel.setText("Pass!");
+                    choseToPass(0);
                     if (biddersLeft() == 0) {
-                        advanceButton.setText("New Deal");
-                        advanceButton.setOnAction(this::startHand);
-                        setAdvanceButton(true);
-                        scores[0] -= 50;
-                        playerTeamScoreLabel.setText(String.valueOf(scores[0]));
+                        throwInHand(0);
+                        toStartHand();
                     }
                 }
+                bidAction = -1;
             }
 
             int biddersLeft = 0;
@@ -522,31 +285,421 @@ public class Pinochle implements Initializable {
             time.getKeyFrames().add(new KeyFrame(Duration.seconds(1), (KeyValue) null));
             time.playFromStart();
             if (isBidding[0] != -1 || biddersLeft <= 1) time.setOnFinished(e -> editBidActionsGrid());
-            else time.setOnFinished(e -> bid(true, false, false));
+            else time.setOnFinished(e -> bid());
         }
     }
 
     /**
-     * Counts the amount of bidders still in the bid
-     * @return amount left
+     * Sets up advanceButton to advance to meld phase on click
+     */
+    private void toMeldPhase() {
+        activate(advanceButton, true);
+        advanceButton.setOnAction(this::meldPhase);
+        advanceButton.setText("To Meld");
+    }
+
+    /**
+     * Starts the meld phase on clicking advanceButton
+     * @param event Click
+     */
+    private void meldPhase(ActionEvent event) {
+        activate(advanceButton, true);
+        activate(bidPhaseGroup, false);
+        activate(meldPhaseGroup, true);
+        trumpSuitIndicator.setImage(new Image(Objects.requireNonNull(Card.class.getResourceAsStream("/images/" + trumpSuit + ".png"))));
+        layMeld();
+        if (updateMeldPerTeam()) {
+            // toTricksPhase();   <-- goes here
+            updateTricksPerTeam();
+            updateScores();
+        }
+        toStartHand();
+    }
+
+    /**
+     * Gets the array of players
+     */
+    private void getPlayers() {
+        players = new Player[PLAYERCOUNT];
+        for (int i = 0; i < PLAYERCOUNT; i++) {
+            players[i] = new Player();
+        }
+    }
+
+    /**
+     * Rotates the cards on the left and right 90 degrees
+     * [A rotated HBox is used rather than a VBox to keep the children in handsGroup a consistent type]
+     */
+    private void rotateSideCards() {
+        for (int i = 0; i < PLAYERCOUNT / 2; i++) {
+            handsGroup.getChildren().get(2 * i + 1).getTransforms().add(new Rotate(90, 50, 0));
+        }
+    }
+
+    /**
+     * Updates the graphics for the dealer chip
+     */
+    private void showDealerChip() {
+        dealerChipsGroup.getChildren().get((dealer + 3) % 4).setVisible(false);
+        dealerChipsGroup.getChildren().get(dealer).setVisible(true);
+    }
+
+    /**
+     * Toggles on/off an object
+     * @param parent Object to toggle
+     * @param on Toggle value
+     */
+    private void activate(Button parent, boolean on) {
+        parent.setDisable(!on);
+        parent.setVisible(on);
+    }
+
+    /**
+     * Toggles on/off an object
+     * @param parent Object to toggle
+     * @param on Toggle value
+     */
+    private void activate(Group parent, boolean on) {
+        parent.setDisable(!on);
+        parent.setVisible(on);
+    }
+
+    /**
+     * Toggles on/off an object
+     * @param parent Object to toggle
+     * @param on Toggle value
+     */
+    private void activate(GridPane parent, boolean on) {
+        parent.setDisable(!on);
+        parent.setVisible(on);
+    }
+
+    /**
+     * Resets handsGroup and playerMeldsGroup
+     */
+    private void resetGroups() {
+        resetHandsGroup();
+        resetPlayerMeldsGroup();
+    }
+
+    /**
+     * Resets handsGroup
+     */
+    private void resetHandsGroup() {
+        for (int i = 0; i < handsGroup.getChildren().size(); i++) {
+            ((HBox) handsGroup.getChildren().get(i)).getChildren().clear();
+        }
+    }
+
+    /**
+     * Resets playerMeldsGroup
+     */
+    private void resetPlayerMeldsGroup() {
+        for (int i = 0; i < playersMeldsGroup.getChildren().size(); i++) {
+            VBox parent = (VBox) playersMeldsGroup.getChildren().get(i);
+            for (int j = 0; j < Objects.requireNonNull(parent).getChildren().size(); j++) {
+                HBox subbox = (HBox) parent.getChildren().get(j);
+                for (int k = 0; k < subbox.getChildren().size(); k++) {
+                    ((ImageView) subbox.getChildren().get(k)).setImage(null);
+                }
+            }
+        }
+    }
+
+    /**
+     * Deals the cards to the players
+     */
+    private void dealCards() {
+        Card[][] deal = deck.deal();
+        for (int i = 0; i < PLAYERCOUNT; i++) {
+            players[i].setHand(deal[i]);
+        }
+    }
+
+    /**
+     * Sets an index to each card in hand to retrieve when clicking
+     * @param i Index to pass as value
+     */
+    private void setImageViewUserData(int i) {
+        ImageView imageView = (ImageView) ((HBox) handsGroup.getChildren().get(0)).getChildren().get(i);
+        imageView.setUserData(i);
+        imageView.setOnMouseClicked(event -> playCard((int) imageView.getUserData()));
+    }
+
+    /**
+     * Centers the rest of the cards after playing one
+     */
+    private void toCenter() {
+        int nullCounter = 0;
+        ArrayList<Image> notNull = new ArrayList<>();
+        HBox playerCardImagesHBox = ((HBox) handsGroup.getChildren().get(0));
+        int size = playerCardImagesHBox.getChildren().size();
+        for (int i = 0; i < size; i++) {
+            Image image = ((ImageView) playerCardImagesHBox.getChildren().get(i)).getImage();
+            if (image != null)
+                notNull.add(image);
+            else nullCounter++;
+        }
+        int index = 0;
+        for (int i = 0; i < size; i++) {
+            ImageView imageView = (ImageView) playerCardImagesHBox.getChildren().get(i);
+            if (i < nullCounter / 2 || i >= 20 - Math.round((double) nullCounter / 2))
+                imageView.setImage(null);
+            else {
+                imageView.setImage(notNull.get(index));
+                setImageViewUserData(index);
+                index++;
+            }
+        }
+    }
+
+    /**
+     * Sets the graphics for all cards
+     */
+    private void setCards() {
+        for (int i = 0; i < 20; i++) {
+            ((HBox) handsGroup.getChildren().get(0)).getChildren().add(buildChild(players[0].getHand()[i].getImage(), 57, 79, -40 * (i + 1.5), 0));
+            setImageViewUserData(i);
+
+            for (int j = 1; j < handsGroup.getChildren().size(); j++) {
+                ((HBox) handsGroup.getChildren().get(j)).getChildren().add(buildChild(BACK, 30, 49, -23 * (i - 2), 0));
+            }
+        }
+    }
+
+    /**
+     * Builds an ImageView child for each player's hand
+     * @param image Image to pass (card for player, back for computer)
+     * @param x Relative x position to (0, 0) in HBox
+     * @param y Relative y position to (0, 0) in HBox
+     * @param dx Translation in x direction
+     * @param dy Translation in y direction
+     * @return Resulting ImageView
+     */
+    private ImageView buildChild(Image image, double x, double y, double dx, double dy) {
+        ImageView imageView = new ImageView(image);
+        imageView.setFitWidth(x);
+        imageView.setFitHeight(y);
+        imageView.setTranslateX(dx);
+        imageView.setTranslateY(dy);
+
+        return imageView;
+    }
+
+    /**
+     * Sets the bid labels ("Player", "Opponent 1", "Teammate", "Opponent 2"}
+     */
+    private void setBidLabels() {
+        String[] names = new String[]{"Player", "Opponent 1", "Teammate", "Opponent 2"};
+        for (int i = 0; i < bidStackPanesGroup.getChildren().size(); i++) {
+            ((Label) ((StackPane) bidStackPanesGroup.getChildren().get(i)).getChildren().get(1)).setText(names[i]);
+        }
+    }
+
+    /**
+     * Sets the bid actions grid (bid or pass)
+     */
+    private void setBidActionsGrid() {
+        for (int i = 0; i < bidActionsGrid.getChildren().size(); i++) {
+            Button button = (Button) bidActionsGrid.getChildren().get(i);
+            button.setUserData(i);
+            button.setOnAction(event -> bidAction((int) button.getUserData()));
+        }
+        ((Button) bidActionsGrid.getChildren().get(1)).setText("Pass");
+    }
+
+    /**
+     * What the computer does when it is its turn to bid
+     * @param bidder Which computer is bidding
+     */
+    private void computerBid(int bidder) {
+
+        if (isBidding[bidder] == 0 && biddersLeft() == 1) bid = 50; // Bid dropped on computer
+
+        int max = max(players[bidder].getExpectedPoints(bidAtLeastOnce[(bidder + 2) % 4]));
+        boolean hasBid = bid <= max;
+
+        if(biddersLeft()==1 && isBidding[bidder]==1) { // Computer won bid
+            computerWonBid(bidder);
+        } else if (hasBid) { // Computer bidding
+            choseToBid(bidder);
+            increaseBid();
+        } else { // Passes
+            choseToPass(bidder);
+            if (biddersLeft() == 0) { // Computer throws in hand
+                throwInHand(bidder);
+                toStartHand();
+            }
+        }
+    }
+
+    /**
+     * Amount of bidders that remain in the bid (have not passed)
+     * @return Count
      */
     private int biddersLeft() {
         int bidders = 0;
-        for(int bit : isBidding) {
-            if(bit!=-1) bidders++;
+        for (int bit : isBidding) {
+            if (bit != -1) bidders++;
         }
         return bidders;
     }
 
     /**
-     * Gets the cards needed to lay meld
-     * @param meldCardsHashMap Cards and amounts needed
-     * @return Cards in order to lay
+     * What the user does on their turn to bid
+     * @param i Index of button clicked (0 for bid, 1 for pass)
+     */
+    private void bidAction(int i) {
+        activate(bidActionsGrid, false);
+        bidAction = i;
+        isBidding[0] = (int) ((i - .5) * -2);
+        bid();
+    }
+
+    /**
+     * Increases the bid after a player bids
+     */
+    private void increaseBid() {
+        if (bid < 60) bid += 2;
+        else bid += 5;
+    }
+
+    /**
+     * What happens after a player bids
+     * @param bidder Player that bid
+     */
+    private void choseToBid(int bidder) {
+        Label label = (Label) ((StackPane) bidStackPanesGroup.getChildren().get(bidder)).getChildren().get(1);
+        assert label != null;
+
+        isBidding[bidder] = 1;
+        bidAtLeastOnce[bidder] = true;
+        label.setText("Bid: " + bid);
+    }
+
+    /**
+     * What happens after a player passes the bid
+     * @param bidder Player that passed
+     */
+    private void choseToPass(int bidder) {
+        Label label = (Label) ((StackPane) bidStackPanesGroup.getChildren().get(bidder)).getChildren().get(1);
+        assert label != null;
+
+        isBidding[bidder] = -1;
+        label.setText("Pass!");
+    }
+
+    /**
+     * What happens after a player throws in a hand (none of the 4 players bid)
+     * @param bidder Player that dealt
+     */
+    private void throwInHand(int bidder) {
+        int team = bidder % 2;
+        scores[team] -= bid;
+        Label scoreLabel = (Label) scoresGridPane.getChildren().get(team);
+        scoreLabel.setText(String.valueOf(scores[team]));
+    }
+
+    /**
+     * Edits the bid actions grid to show the options that the user has on their turn to bid
+     */
+    private void editBidActionsGrid() {
+        if (isBidding[0] != -1 && biddersLeft() >= 1) { // Player is in bid
+            activate(bidActionsGrid, true);
+            if(isBidding[0]==0 && biddersLeft()==1) { // Bid is dropped on player
+                bid = 50;
+                ((Button) bidActionsGrid.getChildren().get(1)).setText("Throw");
+            } else if(isBidding[0] == 1 && biddersLeft() == 1) { // Player has won bid
+                activate(bidActionsGrid, false);
+                bidPerTeam[0] += bid;
+                setSuitsGrid();
+            }
+            ((Button) bidActionsGrid.getChildren().get(0)).setText("Bid " + bid);
+        }
+    }
+
+    /**
+     * What happens when a computer wins the bid
+     * @param bidder Computer that won the bid
+     */
+    private void computerWonBid(int bidder) {
+        bidPerTeam[bidder % 2] = bid;
+        endBiddingPhase = true;
+
+        int[] expectedPoints = players[bidder].getExpectedPoints(bidAtLeastOnce[(bidder + 2) % 4]);
+        int max = max(expectedPoints);
+        for (int i = 0; i < PLAYERCOUNT; i++) {
+            if (expectedPoints[i] == max) {
+                pickSuit(i);
+                break;
+            }
+        }
+    }
+
+    /**
+     * Gets the max number of an array
+     * @param nums Array of numbers
+     * @return Max number in the array
+     */
+    private int max(int[] nums) {
+        int max = nums[0];
+        for (int i : nums) {
+            max = Math.max(max, i);
+        }
+        return max;
+    }
+
+    /**
+     * Sets the grid that allows the user to pick trump suit (if the user won the bid)
+     */
+    private void setSuitsGrid() {
+        for (int i = 0; i < suitsGrid.getChildren().size(); i++) {
+            ImageView imageView = (ImageView) suitsGrid.getChildren().get(i);
+            imageView.setUserData(i);
+            imageView.setOnMouseClicked(event -> pickSuit((int) imageView.getUserData()));
+        }
+        activate(suitsGrid, true);
+    }
+
+    /**
+     * What happens when it's time to pick trump suit
+     * @param i index of suit to select
+     */
+    private void pickSuit(int i) {
+        trumpSuit = suits[i];
+        activate(suitsGrid, false);
+        toMeldPhase();
+    }
+
+    /**
+     * Laying the meld of all players on the table
+     */
+    private void layMeld() {
+        for (int i = 0; i < playersMeldsGroup.getChildren().size(); i++) {
+            VBox parent = (VBox) playersMeldsGroup.getChildren().get(i);
+            ArrayList<String> meldCards = getMeldCards(players[i].getMeldCardsHashMap(trumpSuit));
+            for (int j = 0; j < Objects.requireNonNull(parent).getChildren().size(); j++) {
+                HBox subBox = (HBox) parent.getChildren().get(j);
+                subBox.getChildren().clear();
+                for (int k = 0; k < 5; k++) {
+                    if (5 * j + k < meldCards.size()) {
+                        Image image = new Image(Objects.requireNonNull(Card.class.getResourceAsStream("/images/" + meldCards.get(5 * j + k) + ".png")));
+                        subBox.getChildren().add(buildChild(image, 45, 70, -35 * k, -50 * j));
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Gets the cards for each player to lay
+     * @param meldCardsHashMap Return from getMeldCardsHashMap(trumpSuit) in Player class
+     * @return ArrayList of cards to lay
      */
     private ArrayList<String> getMeldCards(HashMap<String, Integer> meldCardsHashMap) {
         ArrayList<String> meldCards = new ArrayList<>();
-        for(String card : meldCardsHashMap.keySet()) {
-            for(int i=0; i<meldCardsHashMap.get(card); i++) {
+        for (String card : meldCardsHashMap.keySet()) {
+            for (int i = 0; i < meldCardsHashMap.get(card); i++) {
                 meldCards.add(card);
             }
         }
@@ -554,187 +707,28 @@ public class Pinochle implements Initializable {
     }
 
     /**
-     * Sets the bid labels for bid phase
-     */
-    private void setBidLabels() {
-        String[] names = new String[] {"Player", "Opponent 1", "Teammate", "Opponent 2"};
-        for(int i=0; i<bidStackPanesGroup.getChildren().size(); i++) {
-            ((Label) ((StackPane) bidStackPanesGroup.getChildren().get(i)).getChildren().get(1)).setText(names[i]);
-        }
-    }
-
-    /**
-     * Sets bid actions grid for when it is player's turn to bid
-     */
-    private void setBidActionsGrid() {
-        for(int i=0; i<bidActionsGrid.getChildren().size(); i++) {
-            Button button = (Button) bidActionsGrid.getChildren().get(i);
-            button.setUserData(i);
-            button.setOnAction(event -> bidAction((int) button.getUserData()));
-        }
-        ((Button) bidActionsGrid.getChildren().get(0)).setText("Pass");
-    }
-
-    /**
-     * Reads the user's decision to bid or pass
-     * @param i decision
-     */
-    private void bidAction(int i) {
-        bidActionsGrid.setVisible(false);
-        bidActionsGrid.setDisable(true);
-        bid(true, true, i==1);
-    }
-
-    /**
-     * Sets the display of bids
-     * @param on show/hide
-     */
-    private void setBidStackPanes(boolean on) {
-        for(int i=0; i<bidStackPanesGroup.getChildren().size(); i++) {
-            StackPane stackPane = (StackPane) bidStackPanesGroup.getChildren().get(i);
-            stackPane.setDisable(!on);
-            stackPane.setVisible(on);
-        }
-    }
-
-    /**
-     * What the computer will do on their bid
-     * @param bidder computer whose turn it is
-     */
-    private void computerBid(int bidder) {
-        Label label = (Label) ((StackPane) bidStackPanesGroup.getChildren().get(bidder)).getChildren().get(1);
-
-        if(isBidding[bidder]==0 && biddersLeft()==1) bid = 50; // Bid dropped on computer
-
-        int max = max(players[bidder].getExpectedPoints(bidAtLeastOnce[(bidder+2)%4]));
-        boolean hasBid = bid<=max;
-        if(isBidding[bidder]!=-1 && hasBid && biddersLeft()>1) { // Computer bidding
-            isBidding[bidder] = 1;
-            bidAtLeastOnce[bidder] = true;
-            assert label != null;
-            label.setText("Bid: " + bid);
-            bid += 2;
-            if (bid > 60) bid += 3;
-        } else if(((isBidding[bidder]==1 && biddersLeft()==1) || (isBidding[bidder] == 0 && biddersLeft()==1 && hasBid)) && !endBiddingPhase) { // Computer wins bid
-            if(isBidding[bidder] == 1) {
-                if(bid<=60) bid-=2;
-                else bid-=5;
-            }
-            assert label != null;
-            label.setText("Bid: " + bid);
-            bidPerTeam[bidder%2] = bid;
-            endBiddingPhase = true;
-            computerWonBid(bidder);
-        } else if(isBidding[bidder]==0 && !hasBid && biddersLeft()==1) { // Computer gets dropped on but passes
-            int team = bidder%2;
-            Label scoreLabel;
-            scores[team] -= bid;
-            if(team==1) scoreLabel = otherTeamScoreLabel;
-            else scoreLabel = playerTeamScoreLabel;
-            setAdvanceButton(true);
-            scoreLabel.setText(String.valueOf(scores[team]));
-            isBidding[bidder] = -1;
-            assert label != null;
-            label.setText("Pass!");
-            advanceButton.setOnAction(this::startHand);
-            advanceButton.setText("New Deal");
-        } else { // Computer passes
-            isBidding[bidder] = -1;
-            assert label != null;
-            label.setText("Pass!");
-        }
-    }
-
-    /**
-     * Edits bid actions grid for player's turn
-     */
-    private void editBidActionsGrid() {
-        if(isBidding[0]!=-1 && biddersLeft()>1) { // Player is in bid, but so are others
-            bidActionsGrid.setDisable(false);
-            ((Button) bidActionsGrid.getChildren().get(1)).setText("Bid "+bid);
-            bidActionsGrid.setVisible(true);
-        } else if(isBidding[0]==0 && biddersLeft()==1) { // Bid is dropped on player
-            bid = 50;
-            bidActionsGrid.setDisable(false);
-            ((Button) bidActionsGrid.getChildren().get(0)).setText("Throw");
-            ((Button) bidActionsGrid.getChildren().get(1)).setText("Bid "+bid);
-            bidActionsGrid.setVisible(true);
-        } else if(isBidding[0]==1 && biddersLeft()==1) { // Player has won bid
-            bidPerTeam[0] += bid;
-            setSuitsGrid(true);
-            setBidStackPanes(false);
-        }
-    }
-
-    /**
-     * What the computer does when they win the bid
-     * @param bidder computer that won bid
-     */
-    private void computerWonBid(int bidder) {
-        String[] suits = new String[]{"C", "H", "S", "D"};
-        int[] expectedPoints = players[bidder].getExpectedPoints(bidAtLeastOnce[(bidder+2)%4]);
-        int max = max(expectedPoints);
-        for (int i = 0; i < PLAYERCOUNT; i++) {
-            if (expectedPoints[i] == max) trumpSuit = suits[i];
-        }
-        endBiddingPhase();
-    }
-    /**
-     * Sets the trump suit indicator
-     */
-    private void setTrumpSuitIndicatorStackPane() {
-        ImageView imageView = new ImageView();
-        imageView.setFitWidth(48);
-        imageView.setFitHeight(48);
-        trumpSuitIndicatorStackPane.getChildren().add(imageView);
-    }
-
-    /**
-     * Sets the advance button
-     * @param on show/hide
-     */
-    private void setAdvanceButton(boolean on) {
-        advanceButton.setDisable(!on);
-        advanceButton.setVisible(on);
-    }
-
-    /**
-     * Gets the max of an array
-     * @param nums array to get max
-     * @return max number
-     */
-    private int max(int[] nums) {
-        int max = nums[0];
-        for(int i : nums) {
-            max = Math.max(max, i);
-        }
-        return max;
-    }
-
-    /**
-     * Updates meld per team to add to score
-     * @return true - team that bid has >=15 meld (play hand)
-     *        false - team that bid has <15 meld (throw in)
+     * Adds the meld for both teams
+     * @return true - bidding team's meld is eligible to play trick phase
+     *        false - bidding team's meld is not eligible to play trick phase
      */
     private boolean updateMeldPerTeam() {
         int trumpSuitIndex = -1;
-        String[] suits = new String[] {"C", "H", "S", "D"};
-        for(int i=0; i<suits.length; i++) {
-            if(trumpSuit.equals(suits[i])) trumpSuitIndex = i;
+        for (int i = 0; i < suits.length; i++) {
+            if (trumpSuit.equals(suits[i])) trumpSuitIndex = i;
         }
-        for(int i=0; i<PLAYERCOUNT; i++) {
-            meldPerTeam[i%2] += players[i].calcMeld()[trumpSuitIndex];
+        for (int i = 0; i < PLAYERCOUNT; i++) {
+            meldPerTeam[i % 2] += players[i].calcMeld()[trumpSuitIndex];
         }
-        advanceButton.setText("Sim Hand");
-        for(int i=0; i<meldPerTeam.length; i++) {
-            if(meldPerTeam[i]<15) {
+        for (int i = 0; i < meldPerTeam.length; i++) {
+            if (meldPerTeam[i] < 15) {
                 meldPerTeam[i] = 0;
-                if(bidPerTeam[i]==bid) {
+                if (bidPerTeam[i] == bid) {
                     scores[i] -= bid;
-                    scores[(i+1)%2] += meldPerTeam[(i+1)%2];
-                    updateScoreLabels();
-                    advanceButton.setText("New Deal");
-                    advanceButton.setOnAction(this::startHand);
+                    scores[(i + 1) % 2] += meldPerTeam[(i + 1) % 2];
+                    for (int j = 0; j < PLAYERCOUNT / 2; j++) {
+                        ((Label) scoresGridPane.getChildren().get(j)).setText(String.valueOf(scores[j]));
+                    }
+                    toStartHand();
                     return false;
                 }
             }
@@ -743,28 +737,19 @@ public class Pinochle implements Initializable {
     }
 
     /**
-     * Deactivates all things needed during bidding phase and sets up trick phase
-     */
-    private void endBiddingPhase() {
-        setAdvanceButton(true);
-        ((ImageView) trumpSuitIndicatorStackPane.getChildren().get(0)).setImage(new Image(Objects.requireNonNull(Card.class.getResourceAsStream("/images/" + trumpSuit + ".png"))));
-    }
-
-    /**
-     * Updates tricksPerTeam by counting how many points each team pulled
-     * TODO: add tricks phase and update this method
+     * Adds the tricks pulled for both teams
+     * TODO: Add trick phase and change the way this method works
      */
     private void updateTricksPerTeam() {
         int trumpSuitIndex = -1;
-        String[] suits = new String[] {"C", "H", "S", "D"};
-        for(int i=0; i<suits.length; i++) {
-            if(trumpSuit.equals(suits[i])) trumpSuitIndex = i;
+        for (int i = 0; i < suits.length; i++) {
+            if (trumpSuit.equals(suits[i])) trumpSuitIndex = i;
         }
-        for(int i=0; i<PLAYERCOUNT; i++) {
-            tricksPerTeam[i%2] += players[i].getExpectedPoints(bidAtLeastOnce[(i+2)%4])[trumpSuitIndex]-players[i].calcMeld()[trumpSuitIndex]-8;
+        for (int i = 0; i < PLAYERCOUNT; i++) {
+            tricksPerTeam[i % 2] += players[i].getExpectedPoints(bidAtLeastOnce[(i + 2) % 4])[trumpSuitIndex] - players[i].calcMeld()[trumpSuitIndex] - 8;
         }
-        for(int i=0; i<tricksPerTeam.length; i++) {
-            if(tricksPerTeam[i] < 15) {
+        for (int i = 0; i < tricksPerTeam.length; i++) {
+            if (tricksPerTeam[i] < 15) {
                 meldPerTeam[i] = 0;
                 tricksPerTeam[i] = 0;
             }
@@ -772,32 +757,24 @@ public class Pinochle implements Initializable {
     }
 
     /**
-     * Updates scores after each hand
+     * Adds the meld + tricks for both teams and compares to bid to update scores
      */
     private void updateScores() {
-        for(int i=0; i<PLAYERCOUNT/2; i++) {
-            if(meldPerTeam[i]+tricksPerTeam[i]>bidPerTeam[i]) scores[i] += meldPerTeam[i]+tricksPerTeam[i];
-            else scores[i]-=bidPerTeam[i];
+        for (int i = 0; i < PLAYERCOUNT / 2; i++) {
+            if (meldPerTeam[i] + tricksPerTeam[i] > bidPerTeam[i]) scores[i] += meldPerTeam[i] + tricksPerTeam[i];
+            else scores[i] -= bidPerTeam[i];
+            ((Label) scoresGridPane.getChildren().get(i)).setText(String.valueOf(scores[i]));
         }
-        updateScoreLabels();
     }
 
     /**
-     * Updates score labels to show new scores
+     * Plays a card on click
+     * @param i Index of card to play
      */
-    private void updateScoreLabels() {
-        playerTeamScoreLabel.setText(String.valueOf(scores[0]));
-        otherTeamScoreLabel.setText(String.valueOf(scores[1]));
-    }
+    private void playCard(int i) {
+        //players[0].playCard(i);
+        ((ImageView) ((HBox) handsGroup.getChildren().get(0)).getChildren().get(i)).setImage(null);
 
-    private void meldPhase(ActionEvent event) {
-        System.out.println(bid);
-        setBidStackPanes(false);
-        layMeld();
-        if (updateMeldPerTeam()) {
-            updateTricksPerTeam();
-            updateScores();
-        }
-        advanceButton.setOnAction(this::startHand);
+        toCenter();
     }
 }

@@ -479,7 +479,7 @@ public class Pinochle implements Initializable {
                 ((Label) ((StackPane) scoreRow.getChildren().get(4*i+j)).getChildren().get(1)).setText(String.valueOf(allScores.get(j)[i]));
             }
         }
-        if (max(scores) < 20) toStartHand(advanceButtonAlt);
+        if (max(scores) < 500) toStartHand(advanceButtonAlt);
         else toEndGame(advanceButtonAlt);
     }
 

@@ -4,12 +4,20 @@ import javafx.animation.*;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Pos;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Paint;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.StrokeLineCap;
+import javafx.scene.shape.StrokeLineJoin;
+import javafx.scene.shape.StrokeType;
+import javafx.scene.text.Font;
 import javafx.scene.transform.Rotate;
 import javafx.util.Duration;
 
@@ -22,6 +30,9 @@ public class Pinochle implements Initializable {
     private Button advanceButton;
 
     @FXML
+    private Button advanceButtonAlt;
+
+    @FXML
     private GridPane bidActionsGrid;
 
     @FXML
@@ -31,13 +42,25 @@ public class Pinochle implements Initializable {
     private Group bidStackPanesGroup;
 
     @FXML
+    private Pane blockPane;
+
+    @FXML
     private Group dealerChipsGroup;
+
+    @FXML
+    private Group endGameGroup;
+
+    @FXML
+    private Label gameResultLabel;
 
     @FXML
     private Group handsGroup;
 
     @FXML
     private Group inGameGroup;
+
+    @FXML
+    private Pane leadPlayerIndicatorsPane;
 
     @FXML
     private Group meldPhaseGroup;
@@ -49,7 +72,19 @@ public class Pinochle implements Initializable {
     private GridPane scoresGridPane;
 
     @FXML
+    private Group scoresGroup;
+
+    @FXML
+    private VBox scoresVBox;
+
+    @FXML
     private GridPane suitsGrid;
+
+    @FXML
+    private Pane trickPane;
+
+    @FXML
+    private Group tricksPhaseGroup;
 
     @FXML
     private ImageView trumpSuitIndicator;
@@ -78,6 +113,9 @@ public class Pinochle implements Initializable {
      * Constant suits {"C", "H", "S", "D"}
      */
     private String[] suits;
+
+    private String[] values;
+
     /**
      * Dealer of the hand
      */
@@ -127,6 +165,10 @@ public class Pinochle implements Initializable {
      * Condition for when to end bidding phase
      */
     private boolean endBiddingPhase;
+    private int leadTrickPlayer;
+    private String playerCardPlayed;
+    private int trickTurn;
+    private ArrayList<String> currentTrick;
 
 
     /**
@@ -143,12 +185,11 @@ public class Pinochle implements Initializable {
      * Gets the variables needed to start the game
      */
     private void getVariables() {
-        dealer = 0;
         PLAYERCOUNT = 4;
-        scores = new int[]{0, 0};
         BACK = new Image(Objects.requireNonNull(Card.class.getResourceAsStream("/images/back.png")));
         deck = new Deck();
         suits = new String[]{"C", "H", "S", "D"};
+        values = new String[] {"J", "Q", "K", "T", "A"};
         getPlayers();
 
         rotateSideCards();
@@ -159,18 +200,25 @@ public class Pinochle implements Initializable {
      */
     @FXML
     void startGame() {
+        dealer = 0;
         activate(welcomeGroup, false);
-        activate(inGameGroup, true);
+        activate(endGameGroup, false);
+        scores = new int[]{0, 0};
+        setScores();
+        for(int i=2; i<scoresVBox.getChildren().size(); i++) {
+            scoresVBox.getChildren().remove(i);
+        }
         startHand();
     }
 
     /**
      * Sets advanceButton to start a new hand on click
      */
-    void toStartHand() {
-        activate(advanceButton, true);
-        advanceButton.setText("New Deal");
-        advanceButton.setOnAction(this::startHand);
+
+    private void toStartHand(Button button) {
+        activate(button, true);
+        button.setText("New Deal");
+        button.setOnAction(this::startHand);
     }
 
     /**
@@ -180,40 +228,39 @@ public class Pinochle implements Initializable {
         bidPerTeam = new int[]{0, 0};
         meldPerTeam = new int[]{0, 0};
         tricksPerTeam = new int[]{0, 0};
+        activate(inGameGroup, true);
 
-        toDealPhase();
+        dealPhase();
     }
 
     /**
      * Starts a new hand on clicking advanceButton
      * @param event Click
      */
+    @FXML
     private void startHand(ActionEvent event) {
         startHand();
-    }
-
-    /**
-     * Sets up the deal phase
-     */
-    private void toDealPhase() {
-        resetGroups();
-        trumpSuitIndicator.setImage(null);
-        activate(bidPhaseGroup, false);
-        activate(meldPhaseGroup, false);
-
-        dealPhase();
     }
 
     /**
      * Dealing the cards and setting the graphics
      */
     private void dealPhase() {
+        resetGroups();
+        trumpSuitIndicator.setImage(null);
+        activate(bidPhaseGroup, false);
+        activate(meldPhaseGroup, false);
+        activate(tricksPhaseGroup, false);
+        activate(scoresGroup, false);
+
         showDealerChip();
 
         dealCards();
         setCards();
 
-        System.out.println(players[0]);
+        for(Player player : players) {
+            System.out.println(player);
+        }
 
         toBidPhase();
     }
@@ -258,18 +305,8 @@ public class Pinochle implements Initializable {
 
             // Human player
             if (bidAction != -1) {
-                if (bidAction == 0) {
-                    choseToBid(0);
-                    if (bid != 50) {
-                        increaseBid();
-                    }
-                } else {
-                    choseToPass(0);
-                    if (biddersLeft() == 0) {
-                        throwInHand(0);
-                        toStartHand();
-                    }
-                }
+                if (bidAction == 0) choseToBid(0);
+                else choseToPass(0);
                 bidAction = -1;
             }
 
@@ -284,8 +321,8 @@ public class Pinochle implements Initializable {
             }
             time.getKeyFrames().add(new KeyFrame(Duration.seconds(1), (KeyValue) null));
             time.playFromStart();
-            if (isBidding[0] != -1 || biddersLeft <= 1) time.setOnFinished(e -> editBidActionsGrid());
-            else time.setOnFinished(e -> bid());
+            if (isBidding[0] != -1) time.setOnFinished(e -> editBidActionsGrid());
+            else if (biddersLeft > 1) time.setOnFinished(e -> bid());
         }
     }
 
@@ -309,11 +346,157 @@ public class Pinochle implements Initializable {
         trumpSuitIndicator.setImage(new Image(Objects.requireNonNull(Card.class.getResourceAsStream("/images/" + trumpSuit + ".png"))));
         layMeld();
         if (updateMeldPerTeam()) {
-            // toTricksPhase();   <-- goes here
+            toTricksPhase();
+        } else toScoreBoard();
+    }
+
+    private void toTricksPhase() {
+        activate(advanceButton, true);
+        advanceButton.setOnAction(this::tricksPhase);
+        advanceButton.setText("To Tricks");
+    }
+
+    private void tricksPhase(ActionEvent event) {
+        activate(advanceButton, false);
+        activate(meldPhaseGroup, false);
+        activate(tricksPhaseGroup, true);
+
+
+        playerCardPlayed = null;
+        currentTrick = new ArrayList<>();
+
+
+        leadTrickPlayer = 0;
+        for(int i=0; i<PLAYERCOUNT; i++) {
+            if(isBidding[i]==1) leadTrickPlayer = i;
+        }
+        trickTurn = leadTrickPlayer;
+
+        setLeadTrickIndicator();
+
+        trick();
+    }
+
+    private void trick() {
+        Timeline time = new Timeline();
+        int iterator = 1;
+
+        if(playerCardPlayed == null) {
+            while (trickTurn != 0) {
+                ArrayList<Integer> legalCards = players[trickTurn].getLegalCards(currentTrick, trumpSuit);
+                String cardToPlay = players[trickTurn].getHand()[legalCards.get(0)].toString();
+                currentTrick.add(cardToPlay);
+                int finalI = trickTurn;
+                time.getKeyFrames().add(new KeyFrame(Duration.seconds(iterator/2.0), e -> playCardVisual(finalI, legalCards.get(0))));
+                iterator++;
+                trickTurn = (trickTurn + 1) % 4;
+            }
+            time.getKeyFrames().add(new KeyFrame(Duration.seconds((iterator-.9)/2.0), (KeyValue) null));
+            time.play();
+            time.setOnFinished(e -> blockCards(false));
+        }
+
+        else {
+            currentTrick.add(playerCardPlayed);
+            playCardVisual(playerCardPlayed);
+            trickTurn++;
+
+            while (trickTurn != leadTrickPlayer) {
+                ArrayList<Integer> legalCards = players[trickTurn].getLegalCards(currentTrick, trumpSuit);
+                String cardToPlay = players[trickTurn].getHand()[legalCards.get(0)].toString();
+                currentTrick.add(cardToPlay);
+                int finalI = trickTurn;
+                time.getKeyFrames().add(new KeyFrame(Duration.seconds(iterator/2.0), e -> playCardVisual(finalI, legalCards.get(0))));
+                iterator++;
+                trickTurn = (trickTurn + 1) % 4;
+            }
+            time.getKeyFrames().add(new KeyFrame(Duration.seconds(iterator/2.0), (KeyValue) null));
+            time.play();
+            time.setOnFinished(e -> finishedTrick());
+        }
+
+
+    }
+
+    private void playCardVisual(int player, int cardIndex) {
+        ImageView imageView = buildChild(players[player].getHand()[cardIndex].getImage(), 43, 64, 0, 0);
+        imageView.setLayoutX(new int[]{50, 10, 50, 93}[player]);
+        imageView.setLayoutY(new int[]{73, 42, 0, 42}[player]);
+        imageView.setRotate((player%2)*90);
+        trickPane.getChildren().add(imageView);
+        if(player==0) playCard(cardIndex);
+        players[player].playCard(cardIndex);
+    }
+
+    private void playCardVisual(String card) {
+        ImageView imageView = buildChild(new Image(Objects.requireNonNull(Card.class.getResourceAsStream("/images/" + card + ".png"))), 43, 64, 0, 0);
+        imageView.setLayoutX(50);
+        imageView.setLayoutY(73);
+        trickPane.getChildren().add(imageView);
+    }
+
+    private void finishedTrick() {
+        declareWinnerOfTrick();
+        currentTrick.clear();
+        trickPane.getChildren().clear();
+        setLeadTrickIndicator();
+        playerCardPlayed = null;
+        trickTurn = leadTrickPlayer;
+        if(!isTrickPhaseOver()) trick();
+        else {
+            tricksPerTeam[leadTrickPlayer%2] += 2;
             updateTricksPerTeam();
             updateScores();
+
+            for(int i=0; i<2; i++) {
+                System.out.println("Team "+i+": \nBid: "+bidPerTeam[i]+"\nMeld: "+meldPerTeam[i]+"\nTricks: "+tricksPerTeam[i]+"\n");
+            }
+
+            toScoreBoard();
         }
-        toStartHand();
+    }
+
+    private void toScoreBoard() {
+        activate(advanceButton, true);
+        advanceButton.setOnAction(this::scoreBoard);
+        advanceButton.setText("Scores");
+    }
+
+    private void scoreBoard(ActionEvent event) {
+        activate(scoresGroup, true);
+        activate(bidPhaseGroup, false);
+        activate(meldPhaseGroup, false);
+        activate(tricksPhaseGroup, false);
+        activate(inGameGroup, false);
+        ArrayList<int[]> allScores = new ArrayList<>();
+        allScores.add(bidPerTeam);
+        allScores.add(meldPerTeam);
+        allScores.add(tricksPerTeam);
+        allScores.add(scores);
+        HBox scoreRow = addNewScoreRow();
+        for(int i=0; i<2; i++) {
+            for (int j = 0; j < 4; j++) {
+                ((Label) ((StackPane) scoreRow.getChildren().get(4*i+j)).getChildren().get(1)).setText(String.valueOf(allScores.get(j)[i]));
+            }
+        }
+        if (max(scores) < 20) toStartHand(advanceButtonAlt);
+        else toEndGame(advanceButtonAlt);
+    }
+
+    private void toEndGame(Button button) {
+        activate(button, true);
+        button.setOnAction(this::endGame);
+        button.setText("To End");
+    }
+
+
+    private void endGame(ActionEvent event) {
+        activate(scoresGroup, false);
+        activate(inGameGroup, false);
+        activate(endGameGroup, true);
+        if(scores[0]>scores[1]) gameResultLabel.setText("You Win!");
+        else if(scores[0]<scores[1]) gameResultLabel.setText("You Lose!");
+        else gameResultLabel.setText("It's a tie!");
     }
 
     /**
@@ -519,18 +702,9 @@ public class Pinochle implements Initializable {
         int max = max(players[bidder].getExpectedPoints(bidAtLeastOnce[(bidder + 2) % 4]));
         boolean hasBid = bid <= max;
 
-        if(biddersLeft()==1 && isBidding[bidder]==1) { // Computer won bid
-            computerWonBid(bidder);
-        } else if (hasBid) { // Computer bidding
-            choseToBid(bidder);
-            increaseBid();
-        } else { // Passes
-            choseToPass(bidder);
-            if (biddersLeft() == 0) { // Computer throws in hand
-                throwInHand(bidder);
-                toStartHand();
-            }
-        }
+        if(biddersLeft()==1 && isBidding[bidder]==1) computerWonBid(bidder);
+        else if (hasBid) choseToBid(bidder);
+        else choseToPass(bidder);
     }
 
     /**
@@ -559,9 +733,11 @@ public class Pinochle implements Initializable {
     /**
      * Increases the bid after a player bids
      */
-    private void increaseBid() {
-        if (bid < 60) bid += 2;
-        else bid += 5;
+    private void increaseBid(boolean increase) {
+        int multiplier = 1;
+        if(!increase) multiplier = -1;
+        if (bid < 60-multiplier) bid += 2*multiplier;
+        else bid += 5*multiplier;
     }
 
     /**
@@ -575,6 +751,7 @@ public class Pinochle implements Initializable {
         isBidding[bidder] = 1;
         bidAtLeastOnce[bidder] = true;
         label.setText("Bid: " + bid);
+        increaseBid(true);
     }
 
     /**
@@ -587,6 +764,7 @@ public class Pinochle implements Initializable {
 
         isBidding[bidder] = -1;
         label.setText("Pass!");
+        if (biddersLeft() == 0) throwInHand(bidder);
     }
 
     /**
@@ -594,10 +772,12 @@ public class Pinochle implements Initializable {
      * @param bidder Player that dealt
      */
     private void throwInHand(int bidder) {
+        endBiddingPhase = true;
         int team = bidder % 2;
         scores[team] -= bid;
         Label scoreLabel = (Label) scoresGridPane.getChildren().get(team);
         scoreLabel.setText(String.valueOf(scores[team]));
+        toScoreBoard();
     }
 
     /**
@@ -610,6 +790,7 @@ public class Pinochle implements Initializable {
                 bid = 50;
                 ((Button) bidActionsGrid.getChildren().get(1)).setText("Throw");
             } else if(isBidding[0] == 1 && biddersLeft() == 1) { // Player has won bid
+                increaseBid(false);
                 activate(bidActionsGrid, false);
                 bidPerTeam[0] += bid;
                 setSuitsGrid();
@@ -623,8 +804,8 @@ public class Pinochle implements Initializable {
      * @param bidder Computer that won the bid
      */
     private void computerWonBid(int bidder) {
+        increaseBid(false);
         bidPerTeam[bidder % 2] = bid;
-        endBiddingPhase = true;
 
         int[] expectedPoints = players[bidder].getExpectedPoints(bidAtLeastOnce[(bidder + 2) % 4]);
         int max = max(expectedPoints);
@@ -666,6 +847,7 @@ public class Pinochle implements Initializable {
      * @param i index of suit to select
      */
     private void pickSuit(int i) {
+        endBiddingPhase = true;
         trumpSuit = suits[i];
         activate(suitsGrid, false);
         toMeldPhase();
@@ -728,7 +910,6 @@ public class Pinochle implements Initializable {
                     for (int j = 0; j < PLAYERCOUNT / 2; j++) {
                         ((Label) scoresGridPane.getChildren().get(j)).setText(String.valueOf(scores[j]));
                     }
-                    toStartHand();
                     return false;
                 }
             }
@@ -738,21 +919,19 @@ public class Pinochle implements Initializable {
 
     /**
      * Adds the tricks pulled for both teams
-     * TODO: Add trick phase and change the way this method works
      */
     private void updateTricksPerTeam() {
-        int trumpSuitIndex = -1;
-        for (int i = 0; i < suits.length; i++) {
-            if (trumpSuit.equals(suits[i])) trumpSuitIndex = i;
-        }
-        for (int i = 0; i < PLAYERCOUNT; i++) {
-            tricksPerTeam[i % 2] += players[i].getExpectedPoints(bidAtLeastOnce[(i + 2) % 4])[trumpSuitIndex] - players[i].calcMeld()[trumpSuitIndex] - 8;
-        }
         for (int i = 0; i < tricksPerTeam.length; i++) {
             if (tricksPerTeam[i] < 15) {
                 meldPerTeam[i] = 0;
                 tricksPerTeam[i] = 0;
             }
+        }
+    }
+
+    private void setScores() {
+        for(int i=0; i<2; i++) {
+            ((Label) scoresGridPane.getChildren().get(i)).setText(String.valueOf(scores[i]));
         }
     }
 
@@ -772,9 +951,104 @@ public class Pinochle implements Initializable {
      * @param i Index of card to play
      */
     private void playCard(int i) {
-        //players[0].playCard(i);
-        ((ImageView) ((HBox) handsGroup.getChildren().get(0)).getChildren().get(i)).setImage(null);
+        if(players[0].getLegalCards(currentTrick, trumpSuit).contains(i)) {
+            blockCards(true);
+            playerCardPlayed = players[0].getHand()[i].toString();
 
-        toCenter();
+            players[0].playCard(i);
+            ((ImageView) ((HBox) handsGroup.getChildren().get(0)).getChildren().get(i)).setImage(null);
+
+            toCenter();
+
+            trick();
+        }
+    }
+
+    private void declareWinnerOfTrick() {
+        ArrayList<String> orderGeneral = getTrickOrder();
+
+        int winner = 0;
+        int highestIndex = orderGeneral.indexOf(currentTrick.get(0));
+        for(int i=0; i<currentTrick.size(); i++) {
+            if(orderGeneral.indexOf(currentTrick.get(i))>highestIndex) {
+                highestIndex = orderGeneral.indexOf(currentTrick.get(i));
+                winner = i;
+            }
+        }
+        leadTrickPlayer = (winner+leadTrickPlayer)%4;
+        tricksPerTeam[leadTrickPlayer%2] += countPoints();
+    }
+
+    private void setLeadTrickIndicator() {
+        for(int i=0; i<PLAYERCOUNT; i++) {
+            boolean visible = i==leadTrickPlayer;
+            leadPlayerIndicatorsPane.getChildren().get(i).setVisible(visible);
+        }
+    }
+
+    private void blockCards(boolean block) {
+        blockPane.setDisable(!block);
+    }
+
+    private boolean isTrickPhaseOver() {
+        return players[0].getHand()[9]==null;
+    }
+
+    private ArrayList<String> getTrickOrder() {
+        String suitOfTrick = String.valueOf(currentTrick.get(0).charAt(1));
+        ArrayList<String> orderGeneral = new ArrayList<>();
+        ArrayList<String> orderOfTrump = new ArrayList<>();
+        for(String value : values) {
+            orderGeneral.add(value+suitOfTrick);
+            orderOfTrump.add(value+trumpSuit);
+        }
+        if(!orderGeneral.equals(orderOfTrump)) orderGeneral.addAll(orderOfTrump);
+        return orderGeneral;
+    }
+
+    private int countPoints() {
+        int points = 0;
+        char[] pointCards = new char[] {'K', 'T', 'A'};
+        for(String card : currentTrick) {
+            for(char point : pointCards) {
+                if(card.charAt(0) == point) points++;
+            }
+        }
+        return points;
+    }
+
+    @FXML
+    private void exitGame(ActionEvent event) {
+        ((Node)(event.getSource())).getScene().getWindow().hide();
+    }
+
+
+    private HBox addNewScoreRow() {
+        HBox scoreRow = new HBox();
+        for(int i=0; i<2; i++) {
+            for (int j = 0; j < 4; j++) {
+                StackPane box = new StackPane();
+                Rectangle background = new Rectangle();
+                if (j == 3) background.setWidth(70);
+                else background.setWidth(60);
+                background.setHeight(15);
+                background.setFill(Paint.valueOf("#FFFFFF"));
+                background.setStroke(Paint.valueOf("#000000"));
+                background.setStrokeType(StrokeType.INSIDE);
+                background.setStrokeLineCap(StrokeLineCap.SQUARE);
+                background.setStrokeLineJoin(StrokeLineJoin.MITER);
+                background.setArcWidth(5);
+                background.setArcHeight(5);
+                box.getChildren().add(background);
+
+                Label number = new Label();
+                number.setAlignment(Pos.BASELINE_CENTER);
+                number.setFont(Font.font("Bodoni MT Black"));
+                box.getChildren().add(number);
+                scoreRow.getChildren().add(box);
+            }
+        }
+        scoresVBox.getChildren().add(scoreRow);
+        return scoreRow;
     }
 }

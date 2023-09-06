@@ -9,11 +9,13 @@
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.shape.Ellipse?>
+<?import javafx.scene.shape.Rectangle?>
 <?import javafx.scene.text.Font?>
 
 <AnchorPane prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: #008000;" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pinochle.Pinochle">
@@ -98,7 +100,7 @@
                   <HBox layoutX="490.0" layoutY="101.0" />
                </children>
             </Group>
-              <Button fx:id="advanceButton" alignment="CENTER" disable="true" layoutX="488.0" layoutY="25.0" mnemonicParsing="false" prefHeight="47.0" prefWidth="84.0" style="-fx-background-color: #00FF00;" text="Advance Button" textOverrun="CLIP" visible="false">
+              <Button fx:id="advanceButton" alignment="CENTER" layoutX="483.0" layoutY="27.0" mnemonicParsing="false" prefHeight="47.0" prefWidth="84.0" style="-fx-background-color: #00FF00;" text="Advance Button" textOverrun="CLIP">
                   <font>
                       <Font name="Bodoni MT Black" size="13.0" />
                   </font>
@@ -148,6 +150,7 @@
                </children>
             </Group>
             <ImageView fx:id="trumpSuitIndicator" fitHeight="48.0" fitWidth="48.0" layoutX="27.0" layoutY="330.0" pickOnBounds="true" preserveRatio="true" />
+            <Pane fx:id="blockPane" layoutY="238.0" prefHeight="161.0" prefWidth="621.0" />
          </children>
       </Group>
       <Group fx:id="bidPhaseGroup" disable="true" visible="false">
@@ -289,6 +292,208 @@
                     </VBox>
                </children>
             </Group>
+         </children>
+      </Group>
+      <Group fx:id="tricksPhaseGroup" disable="true" layoutX="74.5621337890625" layoutY="73.0" visible="false">
+         <children>
+            <Pane fx:id="leadPlayerIndicatorsPane" prefWidth="475.0">
+               <children>
+                  <ImageView fitHeight="30.0" fitWidth="20.0" layoutX="211.0" layoutY="202.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../../../images/back.png" />
+                     </image>
+                  </ImageView>
+                  <ImageView fitHeight="30.0" fitWidth="20.0" layoutX="5.0" layoutY="117.0" pickOnBounds="true" preserveRatio="true" rotate="90.0">
+                     <image>
+                        <Image url="@../../../images/back.png" />
+                     </image>
+                  </ImageView>
+                  <ImageView fitHeight="30.0" fitWidth="20.0" layoutX="211.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../../../images/back.png" />
+                     </image>
+                  </ImageView>
+                  <ImageView fitHeight="30.0" fitWidth="20.0" layoutX="424.0" layoutY="121.0" pickOnBounds="true" preserveRatio="true" rotate="90.0">
+                     <image>
+                        <Image url="@../../../images/back.png" />
+                     </image>
+                  </ImageView>
+               </children>
+            </Pane>
+            <Pane fx:id="trickPane" layoutX="150.45858764648438" layoutY="59.0" />
+         </children>
+      </Group>
+      <Group fx:id="scoresGroup" disable="true" layoutX="67.0" layoutY="25.0" visible="false">
+         <children>
+            <VBox fx:id="scoresVBox">
+               <children>
+                  <StackPane prefHeight="50.0" prefWidth="500.0">
+                     <children>
+                        <Rectangle arcHeight="5.0" arcWidth="5.0" fill="WHITE" height="50.0" stroke="BLACK" strokeType="INSIDE" width="500.0" />
+                        <Label alignment="CENTER" prefHeight="50.0" prefWidth="500.0" text="Scores">
+                           <font>
+                              <Font name="Bodoni MT Black" size="25.0" />
+                           </font>
+                        </Label>
+                        <Button fx:id="advanceButtonAlt" alignment="CENTER" mnemonicParsing="false" prefHeight="47.0" prefWidth="84.0" style="-fx-background-color: #00FF00;" text="New Deal" textOverrun="CLIP" StackPane.alignment="CENTER_RIGHT">
+                           <font>
+                              <Font name="Bodoni MT Black" size="13.0" />
+                           </font>
+                        </Button>
+                     </children>
+                  </StackPane>
+                  <HBox maxHeight="50.0" minHeight="50.0" prefHeight="50.0">
+                     <children>
+                        <VBox>
+                           <children>
+                              <StackPane prefHeight="30.0" prefWidth="250.0">
+                                 <children>
+                                    <Rectangle arcHeight="5.0" arcWidth="5.0" fill="WHITE" height="30.0" stroke="BLACK" strokeType="INSIDE" width="250.0" />
+                                    <Label alignment="CENTER" prefHeight="30.0" prefWidth="250.0" text="Your Team">
+                                       <font>
+                                          <Font name="Bodoni MT Black" size="18.0" />
+                                       </font>
+                                    </Label>
+                                 </children>
+                              </StackPane>
+                              <HBox>
+                                 <children>
+                                    <StackPane prefHeight="20.0" prefWidth="60.0">
+                                       <children>
+                                          <Rectangle arcHeight="5.0" arcWidth="5.0" fill="WHITE" height="20.0" stroke="BLACK" strokeType="INSIDE" width="60.0" />
+                                          <Label alignment="CENTER" prefHeight="20.0" prefWidth="60.0" text="Bid">
+                                             <font>
+                                                <Font name="Bodoni MT Black" size="14.0" />
+                                             </font>
+                                          </Label>
+                                       </children>
+                                    </StackPane>
+                                    <StackPane prefHeight="20.0" prefWidth="60.0">
+                                       <children>
+                                          <Rectangle arcHeight="5.0" arcWidth="5.0" fill="WHITE" height="20.0" stroke="BLACK" strokeType="INSIDE" width="60.0" />
+                                          <Label alignment="CENTER" prefHeight="20.0" prefWidth="60.0" text="Meld">
+                                             <font>
+                                                <Font name="Bodoni MT Black" size="14.0" />
+                                             </font>
+                                          </Label>
+                                       </children>
+                                    </StackPane>
+                                    <StackPane prefHeight="20.0" prefWidth="60.0">
+                                       <children>
+                                          <Rectangle arcHeight="5.0" arcWidth="5.0" fill="WHITE" height="20.0" stroke="BLACK" strokeType="INSIDE" width="60.0" />
+                                          <Label alignment="CENTER" prefHeight="20.0" prefWidth="60.0" text="Tricks">
+                                             <font>
+                                                <Font name="Bodoni MT Black" size="14.0" />
+                                             </font>
+                                          </Label>
+                                       </children>
+                                    </StackPane>
+                                    <StackPane prefHeight="20.0" prefWidth="70.0">
+                                       <children>
+                                          <Rectangle arcHeight="5.0" arcWidth="5.0" fill="WHITE" height="20.0" stroke="BLACK" strokeType="INSIDE" width="70.0" />
+                                          <Label alignment="CENTER" prefHeight="20.0" prefWidth="70.0" text="Total">
+                                             <font>
+                                                <Font name="Bodoni MT Black" size="14.0" />
+                                             </font>
+                                          </Label>
+                                       </children>
+                                    </StackPane>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                        <VBox>
+                           <children>
+                              <StackPane prefHeight="30.0" prefWidth="250.0">
+                                 <children>
+                                    <Rectangle arcHeight="5.0" arcWidth="5.0" fill="WHITE" height="30.0" stroke="BLACK" strokeType="INSIDE" width="250.0" />
+                                    <Label alignment="CENTER" prefHeight="30.0" prefWidth="250.0" text="Other Team">
+                                       <font>
+                                          <Font name="Bodoni MT Black" size="18.0" />
+                                       </font>
+                                    </Label>
+                                 </children>
+                              </StackPane>
+                              <HBox>
+                                 <children>
+                                    <StackPane prefHeight="20.0" prefWidth="60.0">
+                                       <children>
+                                          <Rectangle arcHeight="5.0" arcWidth="5.0" fill="WHITE" height="20.0" stroke="BLACK" strokeType="INSIDE" width="60.0" />
+                                          <Label alignment="CENTER" prefHeight="20.0" prefWidth="60.0" text="Bid">
+                                             <font>
+                                                <Font name="Bodoni MT Black" size="14.0" />
+                                             </font>
+                                          </Label>
+                                       </children>
+                                    </StackPane>
+                                    <StackPane prefHeight="20.0" prefWidth="60.0">
+                                       <children>
+                                          <Rectangle arcHeight="5.0" arcWidth="5.0" fill="WHITE" height="20.0" stroke="BLACK" strokeType="INSIDE" width="60.0" />
+                                          <Label alignment="CENTER" prefHeight="20.0" prefWidth="60.0" text="Meld">
+                                             <font>
+                                                <Font name="Bodoni MT Black" size="14.0" />
+                                             </font>
+                                          </Label>
+                                       </children>
+                                    </StackPane>
+                                    <StackPane prefHeight="20.0" prefWidth="60.0">
+                                       <children>
+                                          <Rectangle arcHeight="5.0" arcWidth="5.0" fill="WHITE" height="20.0" stroke="BLACK" strokeType="INSIDE" width="60.0" />
+                                          <Label alignment="CENTER" prefHeight="20.0" prefWidth="60.0" text="Tricks">
+                                             <font>
+                                                <Font name="Bodoni MT Black" size="14.0" />
+                                             </font>
+                                          </Label>
+                                       </children>
+                                    </StackPane>
+                                    <StackPane prefHeight="20.0" prefWidth="70.0">
+                                       <children>
+                                          <Rectangle arcHeight="5.0" arcWidth="5.0" fill="WHITE" height="20.0" stroke="BLACK" strokeType="INSIDE" width="70.0" />
+                                          <Label alignment="CENTER" prefHeight="20.0" prefWidth="70.0" text="Total">
+                                             <font>
+                                                <Font name="Bodoni MT Black" size="14.0" />
+                                             </font>
+                                          </Label>
+                                       </children>
+                                    </StackPane>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+         </children>
+      </Group>
+      <Group fx:id="endGameGroup" disable="true" layoutX="152.0" layoutY="108.0" visible="false">
+         <children>
+            <GridPane layoutX="46.0" layoutY="48.0" prefHeight="87.0" prefWidth="218.0">
+               <columnConstraints>
+                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+               </columnConstraints>
+               <rowConstraints>
+                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+               </rowConstraints>
+               <children>
+                  <Button mnemonicParsing="false" onAction="#startGame" prefHeight="48.0" prefWidth="83.0" style="-fx-background-color: #00ff00;" text="New Game" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
+                     <font>
+                        <Font name="Bodoni MT Black" size="12.0" />
+                     </font>
+                  </Button>
+                  <Button mnemonicParsing="false" onAction="#exitGame" prefHeight="48.0" prefWidth="83.0" style="-fx-background-color: red;" text="Exit" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
+                     <font>
+                        <Font name="Bodoni MT Black" size="15.0" />
+                     </font>
+                  </Button>
+               </children>
+            </GridPane>
+            <Label fx:id="gameResultLabel" alignment="CENTER" contentDisplay="CENTER" prefHeight="48.0" prefWidth="317.0" text="You Win/Lose Label">
+               <font>
+                  <Font name="Bodoni MT Black" size="26.0" />
+               </font>
+            </Label>
          </children>
       </Group>
     </children>

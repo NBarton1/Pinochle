@@ -37,7 +37,7 @@ public class Player {
     public void setHand(Card[] hand) {
         this.hand = hand;
 
-        //String[] handAsString = new String[] {"QC",  "QC",  "KC",  "AC",  "JH",  "KH",  "TH",  "QS",  "KS",  "AS",  "JD",  "JD",  "QD",  "QD",  "KD",  "KD",  "TD",  "TD",  "AD",  "AD"};
+        //String[] handAsString = new String[] {"JC",  "QC",  "KC",  "TC",  "AC",  "JC",  "TC",  "QC",  "KC",  "AC",  "JD",  "JD",  "QD",  "QD",  "KD",  "KD",  "TD",  "TD",  "AD",  "AD"};
         //for(int i=0; i<20; i++) {
         //    this.hand[i] = new Card(String.valueOf(handAsString[i].charAt(0)), String.valueOf(handAsString[i].charAt(1)));
         //}
@@ -577,6 +577,71 @@ public class Player {
             }
         }
         return nCRrCombos;
+    }
+
+    public ArrayList<Integer> getLegalCards(ArrayList<String> trick, String trumpSuit) {
+        ArrayList<Integer> legalCards = new ArrayList<>();
+        if(trick.isEmpty()) {
+            for(int i=0; i<hand.length; i++) {
+                if(hand[i]!=null) legalCards.add(i);
+            }
+        } else {
+
+            String suitOfTrick = String.valueOf(trick.get(0).charAt(1));
+
+            ArrayList<String> orderGeneral = new ArrayList<>();
+            ArrayList<String> orderOfTrump = new ArrayList<>();
+            for(String value : values) {
+                orderGeneral.add(value+suitOfTrick);
+                orderOfTrump.add(value+trumpSuit);
+            }
+            if(!orderGeneral.equals(orderOfTrump)) orderGeneral.addAll(orderOfTrump);
+
+            boolean suitInHand = false;
+            for(Card card : hand) {
+                if(card!=null && card.getSuit().equals(suitOfTrick)) {
+                    suitInHand = true;
+                    break;
+                }
+            }
+            boolean trumpInHand = false;
+            for(Card card : hand) {
+                if(card!=null && card.getSuit().equals(trumpSuit)) {
+                    trumpInHand = true;
+                    break;
+                }
+            }
+
+            int highestIndex = orderGeneral.indexOf(trick.get(0));
+            for(String card : trick) {
+                highestIndex = Math.max(highestIndex, orderGeneral.indexOf(card));
+            }
+
+            if(suitInHand) {
+                for(int i=0; i<hand.length; i++) {
+                    if(hand[i]!=null && hand[i].getSuit().equals(suitOfTrick) && orderGeneral.indexOf(hand[i].toString())>highestIndex) legalCards.add(i);
+                }
+                if(legalCards.isEmpty()) {
+                    for(int i=0; i<hand.length; i++) {
+                        if(hand[i]!=null && hand[i].getSuit().equals(suitOfTrick)) legalCards.add(i);
+                    }
+                }
+            } else if(trumpInHand) {
+                for(int i=0; i<hand.length; i++) {
+                    if(hand[i]!=null && hand[i].getSuit().equals(trumpSuit) && orderGeneral.indexOf(hand[i].toString())>highestIndex) legalCards.add(i);
+                }
+                if(legalCards.isEmpty()) {
+                    for(int i=0; i<hand.length; i++) {
+                        if(hand[i]!=null && hand[i].getSuit().equals(trumpSuit)) legalCards.add(i);
+                    }
+                }
+            } else {
+                for(int i=0; i<hand.length; i++) {
+                    if(hand[i]!=null) legalCards.add(i);
+                }
+            }
+        }
+        return legalCards;
     }
 
     /**

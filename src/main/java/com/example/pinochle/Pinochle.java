@@ -30,9 +30,6 @@ public class Pinochle implements Initializable {
     private Button advanceButton;
 
     @FXML
-    private Button advanceButtonAlt;
-
-    @FXML
     private GridPane bidActionsGrid;
 
     @FXML
@@ -58,9 +55,6 @@ public class Pinochle implements Initializable {
 
     @FXML
     private Group inGameGroup;
-
-    @FXML
-    private Pane leadPlayerIndicatorsPane;
 
     @FXML
     private Group meldPhaseGroup;
@@ -215,10 +209,10 @@ public class Pinochle implements Initializable {
      * Sets advanceButton to start a new hand on click
      */
 
-    private void toStartHand(Button button) {
-        activate(button, true);
-        button.setText("New Deal");
-        button.setOnAction(this::startHand);
+    private void toStartHand() {
+        activate(advanceButton, true);
+        advanceButton.setText("New Deal");
+        advanceButton.setOnAction(this::startHand);
     }
 
     /**
@@ -229,6 +223,11 @@ public class Pinochle implements Initializable {
         meldPerTeam = new int[]{0, 0};
         tricksPerTeam = new int[]{0, 0};
         activate(inGameGroup, true);
+        activate(scoresGridPane, true);
+        activate(trumpSuitIndicator, true);
+        activate(dealerChipsGroup, true);
+        activate(scoresGridPane, true);
+        activate(handsGroup, true);
 
         dealPhase();
     }
@@ -258,9 +257,7 @@ public class Pinochle implements Initializable {
         dealCards();
         setCards();
 
-        for(Player player : players) {
-            System.out.println(player);
-        }
+        System.out.println(players[0]);
 
         toBidPhase();
     }
@@ -372,8 +369,6 @@ public class Pinochle implements Initializable {
         }
         trickTurn = leadTrickPlayer;
 
-        setLeadTrickIndicator();
-
         trick();
     }
 
@@ -387,11 +382,11 @@ public class Pinochle implements Initializable {
                 String cardToPlay = players[trickTurn].getHand()[legalCards.get(0)].toString();
                 currentTrick.add(cardToPlay);
                 int finalI = trickTurn;
-                time.getKeyFrames().add(new KeyFrame(Duration.seconds(iterator/2.0), e -> playCardVisual(finalI, legalCards.get(0))));
+                time.getKeyFrames().add(new KeyFrame(Duration.seconds(iterator), e -> playCardVisual(finalI, legalCards.get(0))));
                 iterator++;
                 trickTurn = (trickTurn + 1) % 4;
             }
-            time.getKeyFrames().add(new KeyFrame(Duration.seconds((iterator-.9)/2.0), (KeyValue) null));
+            time.getKeyFrames().add(new KeyFrame(Duration.seconds(iterator-.9), (KeyValue) null));
             time.play();
             time.setOnFinished(e -> blockCards(false));
         }
@@ -406,11 +401,11 @@ public class Pinochle implements Initializable {
                 String cardToPlay = players[trickTurn].getHand()[legalCards.get(0)].toString();
                 currentTrick.add(cardToPlay);
                 int finalI = trickTurn;
-                time.getKeyFrames().add(new KeyFrame(Duration.seconds(iterator/2.0), e -> playCardVisual(finalI, legalCards.get(0))));
+                time.getKeyFrames().add(new KeyFrame(Duration.seconds(iterator), e -> playCardVisual(finalI, legalCards.get(0))));
                 iterator++;
                 trickTurn = (trickTurn + 1) % 4;
             }
-            time.getKeyFrames().add(new KeyFrame(Duration.seconds(iterator/2.0), (KeyValue) null));
+            time.getKeyFrames().add(new KeyFrame(Duration.seconds(iterator+.5), (KeyValue) null));
             time.play();
             time.setOnFinished(e -> finishedTrick());
         }
@@ -420,26 +415,31 @@ public class Pinochle implements Initializable {
 
     private void playCardVisual(int player, int cardIndex) {
         ImageView imageView = buildChild(players[player].getHand()[cardIndex].getImage(), 43, 64, 0, 0);
-        imageView.setLayoutX(new int[]{50, 10, 50, 93}[player]);
-        imageView.setLayoutY(new int[]{73, 42, 0, 42}[player]);
+        imageView.setLayoutX(new int[]{50, -90, 50, 193}[player]);
+        imageView.setLayoutY(new int[]{173, 42, -100, 42}[player]);
         imageView.setRotate((player%2)*90);
+        double[] delta = new double[] {-100, 0, 100, 0};
         trickPane.getChildren().add(imageView);
-        if(player==0) playCard(cardIndex);
+        playCardAnimation(imageView, delta[(player+1)%4], delta[player]);
+        computerToCenter(player);
         players[player].playCard(cardIndex);
     }
 
     private void playCardVisual(String card) {
         ImageView imageView = buildChild(new Image(Objects.requireNonNull(Card.class.getResourceAsStream("/images/" + card + ".png"))), 43, 64, 0, 0);
         imageView.setLayoutX(50);
-        imageView.setLayoutY(73);
+        imageView.setLayoutY(173);
         trickPane.getChildren().add(imageView);
+        playCardAnimation(imageView, 0, -100);
     }
 
     private void finishedTrick() {
         declareWinnerOfTrick();
         currentTrick.clear();
         trickPane.getChildren().clear();
-        setLeadTrickIndicator();
+        tricksPhaseGroup.getChildren().remove(0);
+        setLeadPlayerIndicator();
+        winTrickAnimation(leadTrickPlayer);
         playerCardPlayed = null;
         trickTurn = leadTrickPlayer;
         if(!isTrickPhaseOver()) trick();
@@ -447,16 +447,12 @@ public class Pinochle implements Initializable {
             tricksPerTeam[leadTrickPlayer%2] += 2;
             updateTricksPerTeam();
             updateScores();
-
-            for(int i=0; i<2; i++) {
-                System.out.println("Team "+i+": \nBid: "+bidPerTeam[i]+"\nMeld: "+meldPerTeam[i]+"\nTricks: "+tricksPerTeam[i]+"\n");
-            }
-
             toScoreBoard();
         }
     }
 
     private void toScoreBoard() {
+        activate(tricksPhaseGroup, false);
         activate(advanceButton, true);
         advanceButton.setOnAction(this::scoreBoard);
         advanceButton.setText("Scores");
@@ -467,7 +463,10 @@ public class Pinochle implements Initializable {
         activate(bidPhaseGroup, false);
         activate(meldPhaseGroup, false);
         activate(tricksPhaseGroup, false);
-        activate(inGameGroup, false);
+        activate(scoresGridPane, false);
+        activate(trumpSuitIndicator, false);
+        activate(dealerChipsGroup, false);
+        activate(handsGroup, false);
         ArrayList<int[]> allScores = new ArrayList<>();
         allScores.add(bidPerTeam);
         allScores.add(meldPerTeam);
@@ -479,14 +478,14 @@ public class Pinochle implements Initializable {
                 ((Label) ((StackPane) scoreRow.getChildren().get(4*i+j)).getChildren().get(1)).setText(String.valueOf(allScores.get(j)[i]));
             }
         }
-        if (max(scores) < 500) toStartHand(advanceButtonAlt);
-        else toEndGame(advanceButtonAlt);
+        if (max(scores) < 500) toStartHand();
+        else toEndGame();
     }
 
-    private void toEndGame(Button button) {
-        activate(button, true);
-        button.setOnAction(this::endGame);
-        button.setText("To End");
+    private void toEndGame() {
+        activate(advanceButton, true);
+        advanceButton.setOnAction(this::endGame);
+        advanceButton.setText("To End");
     }
 
 
@@ -553,6 +552,16 @@ public class Pinochle implements Initializable {
      * @param on Toggle value
      */
     private void activate(GridPane parent, boolean on) {
+        parent.setDisable(!on);
+        parent.setVisible(on);
+    }
+
+    /**
+     * Toggles on/off an object
+     * @param parent Object to toggle
+     * @param on Toggle value
+     */
+    private void activate(ImageView parent, boolean on) {
         parent.setDisable(!on);
         parent.setVisible(on);
     }
@@ -979,13 +988,6 @@ public class Pinochle implements Initializable {
         tricksPerTeam[leadTrickPlayer%2] += countPoints();
     }
 
-    private void setLeadTrickIndicator() {
-        for(int i=0; i<PLAYERCOUNT; i++) {
-            boolean visible = i==leadTrickPlayer;
-            leadPlayerIndicatorsPane.getChildren().get(i).setVisible(visible);
-        }
-    }
-
     private void blockCards(boolean block) {
         blockPane.setDisable(!block);
     }
@@ -1050,5 +1052,61 @@ public class Pinochle implements Initializable {
         }
         scoresVBox.getChildren().add(scoreRow);
         return scoreRow;
+    }
+
+    private void computerToCenter(int player) {
+        int nullCounter = 0;
+        Card[] hand = players[player].getHand();
+        for (Card card : hand) {
+            if (card == null) nullCounter++;
+        }
+        if(nullCounter%2==0) ((ImageView) ((HBox) handsGroup.getChildren().get(player)).getChildren().get(nullCounter/2)).setImage(null);
+        else ((ImageView) ((HBox) handsGroup.getChildren().get(player)).getChildren().get(20-(nullCounter+1)/2)).setImage(null);
+    }
+
+    private void playCardAnimation(ImageView imageView, double x, double y) {
+        TranslateTransition translate = new TranslateTransition(Duration.seconds(.75), imageView);
+        translate.setByX(x);
+        translate.setByY(y);
+        translate.play();
+    }
+
+    private void setLeadPlayerIndicator() {
+        ImageView imageView = new ImageView();
+        imageView.setImage(BACK);
+        imageView.setLayoutX(237);
+        imageView.setLayoutY(130);
+        imageView.setFitWidth(20);
+        imageView.setFitHeight(30);
+        tricksPhaseGroup.getChildren().add(imageView);
+        imageView.toBack();
+    }
+
+    private void winTrickAnimation(int winner) {
+        double x, y, rot = 180;
+        switch(winner) {    //  237, 130
+            case 0 -> {     //  211, 202
+                x = -26;
+                y = 72;
+            } case 1 -> {   // 5, 117
+                x = -232;
+                y = -13;
+                rot = 90;
+            } case 2 -> {   // 211, 0
+                x = -26;
+                y = -130;
+            } case 3 -> {   // 424, 121
+                x = 187;
+                y = -9;
+                rot = 90;
+            } default -> x = y = 0;
+        }
+        TranslateTransition translate = new TranslateTransition(Duration.seconds(.5), tricksPhaseGroup.getChildren().get(0));
+        translate.setByX(x);
+        translate.setByY(y);
+        RotateTransition rotate = new RotateTransition(Duration.seconds(.2*rot/90), tricksPhaseGroup.getChildren().get(0));
+        rotate.setByAngle(rot);
+        translate.play();
+        rotate.play();
     }
 }

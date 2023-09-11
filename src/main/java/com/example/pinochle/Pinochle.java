@@ -1052,6 +1052,7 @@ public class Pinochle implements Initializable {
         }
         scoresVBox.getChildren().add(scoreRow);
         return scoreRow;
+
     }
 
     private void computerToCenter(int player) {

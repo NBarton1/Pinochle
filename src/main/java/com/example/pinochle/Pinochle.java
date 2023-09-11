@@ -163,6 +163,7 @@ public class Pinochle implements Initializable {
     private String playerCardPlayed;
     private int trickTurn;
     private ArrayList<String> currentTrick;
+    private boolean isFirstTrick;
 
 
     /**
@@ -319,7 +320,7 @@ public class Pinochle implements Initializable {
             time.getKeyFrames().add(new KeyFrame(Duration.seconds(1), (KeyValue) null));
             time.playFromStart();
             if (isBidding[0] != -1) time.setOnFinished(e -> editBidActionsGrid());
-            else if (biddersLeft > 1) time.setOnFinished(e -> bid());
+            else if (biddersLeft > 0) time.setOnFinished(e -> bid());
         }
     }
 
@@ -360,6 +361,7 @@ public class Pinochle implements Initializable {
 
 
         playerCardPlayed = null;
+        isFirstTrick = true;
         currentTrick = new ArrayList<>();
 
 
@@ -368,6 +370,8 @@ public class Pinochle implements Initializable {
             if(isBidding[i]==1) leadTrickPlayer = i;
         }
         trickTurn = leadTrickPlayer;
+
+        tricksPhaseGroup.getChildren().remove(0);
 
         trick();
     }
@@ -434,14 +438,16 @@ public class Pinochle implements Initializable {
     }
 
     private void finishedTrick() {
+
         declareWinnerOfTrick();
         currentTrick.clear();
         trickPane.getChildren().clear();
-        tricksPhaseGroup.getChildren().remove(0);
+        if (!isFirstTrick) tricksPhaseGroup.getChildren().remove(0);
         setLeadPlayerIndicator();
         winTrickAnimation(leadTrickPlayer);
         playerCardPlayed = null;
         trickTurn = leadTrickPlayer;
+        isFirstTrick = false;
         if(!isTrickPhaseOver()) trick();
         else {
             tricksPerTeam[leadTrickPlayer%2] += 2;

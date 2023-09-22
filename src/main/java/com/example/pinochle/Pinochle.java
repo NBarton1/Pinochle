@@ -23,6 +23,7 @@ import javafx.util.Duration;
 
 import java.net.URL;
 import java.util.*;
+import java.util.stream.IntStream;
 
 public class Pinochle implements Initializable {
 
@@ -164,6 +165,11 @@ public class Pinochle implements Initializable {
     private int trickTurn;
     private ArrayList<String> currentTrick;
     private boolean isFirstTrick;
+    private HashMap<String, Integer> cardsLeft;
+    private boolean[][] isTrumping;
+    private boolean[] hasTrump;
+    private String[][] maxCards;
+    private ArrayList<String>[] knownCards;
 
 
     /**
@@ -342,6 +348,10 @@ public class Pinochle implements Initializable {
         activate(bidPhaseGroup, false);
         activate(meldPhaseGroup, true);
         trumpSuitIndicator.setImage(new Image(Objects.requireNonNull(Card.class.getResourceAsStream("/images/" + trumpSuit + ".png"))));
+        knownCards = new ArrayList[PLAYERCOUNT];
+        for(int i=0; i<knownCards.length; i++) {
+            knownCards[i] = new ArrayList<>();
+        }
         layMeld();
         if (updateMeldPerTeam()) {
             toTricksPhase();
@@ -359,11 +369,27 @@ public class Pinochle implements Initializable {
         activate(meldPhaseGroup, false);
         activate(tricksPhaseGroup, true);
 
-
         playerCardPlayed = null;
         isFirstTrick = true;
         currentTrick = new ArrayList<>();
 
+        isTrumping = new boolean[PLAYERCOUNT][suits.length];
+        hasTrump = new boolean[PLAYERCOUNT];
+        for(int i=0; i<PLAYERCOUNT; i++) {
+            hasTrump[i] = true;
+        }
+        cardsLeft = new HashMap<>();
+        for(String suit : suits) {
+            for(String value : values) {
+                cardsLeft.put(value+suit, 4);
+            }
+        }
+        maxCards = new String[PLAYERCOUNT][suits.length];
+        for(int i=0; i<maxCards.length; i++) {
+            for(int j=0; j<suits.length; j++) {
+                maxCards[i][j] = "A"+suits[j];
+            }
+        }
 
         leadTrickPlayer = 0;
         for(int i=0; i<PLAYERCOUNT; i++) {
@@ -382,11 +408,10 @@ public class Pinochle implements Initializable {
 
         if(playerCardPlayed == null) {
             while (trickTurn != 0) {
-                ArrayList<Integer> legalCards = players[trickTurn].getLegalCards(currentTrick, trumpSuit);
-                String cardToPlay = players[trickTurn].getHand()[legalCards.get(0)].toString();
+                String cardToPlay = players[trickTurn].getCardToPlay(currentTrick, trumpSuit, cardsLeft, knownCards, isTrumping, hasTrump, trickTurn);
                 currentTrick.add(cardToPlay);
                 int finalI = trickTurn;
-                time.getKeyFrames().add(new KeyFrame(Duration.seconds(iterator), e -> playCardVisual(finalI, legalCards.get(0))));
+                time.getKeyFrames().add(new KeyFrame(Duration.seconds(iterator), e -> playCardVisual(finalI, cardToPlay)));
                 iterator++;
                 trickTurn = (trickTurn + 1) % 4;
             }
@@ -396,16 +421,14 @@ public class Pinochle implements Initializable {
         }
 
         else {
-            currentTrick.add(playerCardPlayed);
             playCardVisual(playerCardPlayed);
             trickTurn++;
 
             while (trickTurn != leadTrickPlayer) {
-                ArrayList<Integer> legalCards = players[trickTurn].getLegalCards(currentTrick, trumpSuit);
-                String cardToPlay = players[trickTurn].getHand()[legalCards.get(0)].toString();
+                String cardToPlay = players[trickTurn].getCardToPlay(currentTrick, trumpSuit, cardsLeft, knownCards, isTrumping, hasTrump, trickTurn);
                 currentTrick.add(cardToPlay);
                 int finalI = trickTurn;
-                time.getKeyFrames().add(new KeyFrame(Duration.seconds(iterator), e -> playCardVisual(finalI, legalCards.get(0))));
+                time.getKeyFrames().add(new KeyFrame(Duration.seconds(iterator), e -> playCardVisual(finalI, cardToPlay)));
                 iterator++;
                 trickTurn = (trickTurn + 1) % 4;
             }
@@ -417,8 +440,8 @@ public class Pinochle implements Initializable {
 
     }
 
-    private void playCardVisual(int player, int cardIndex) {
-        ImageView imageView = buildChild(players[player].getHand()[cardIndex].getImage(), 43, 64, 0, 0);
+    private void playCardVisual(int player, String card) {
+        ImageView imageView = buildChild(new Image(Objects.requireNonNull(Card.class.getResourceAsStream("/images/"+card+".png"))), 43, 64, 0, 0);
         imageView.setLayoutX(new int[]{50, -90, 50, 193}[player]);
         imageView.setLayoutY(new int[]{173, 42, -100, 42}[player]);
         imageView.setRotate((player%2)*90);
@@ -426,7 +449,9 @@ public class Pinochle implements Initializable {
         trickPane.getChildren().add(imageView);
         playCardAnimation(imageView, delta[(player+1)%4], delta[player]);
         computerToCenter(player);
-        players[player].playCard(cardIndex);
+        cardsLeft.put(card, cardsLeft.get(card)-1);
+        playerTrumping(player, card);
+        if(knownCards[player].contains(card)) knownCards[player].remove(card);
     }
 
     private void playCardVisual(String card) {
@@ -438,8 +463,9 @@ public class Pinochle implements Initializable {
     }
 
     private void finishedTrick() {
-
-        declareWinnerOfTrick();
+        int winner = declareWinnerOfTrick(currentTrick);
+        leadTrickPlayer = (winner+leadTrickPlayer)%4;
+        tricksPerTeam[leadTrickPlayer%2] += countPoints();
         currentTrick.clear();
         trickPane.getChildren().clear();
         if (!isFirstTrick) tricksPhaseGroup.getChildren().remove(0);
@@ -448,6 +474,7 @@ public class Pinochle implements Initializable {
         playerCardPlayed = null;
         trickTurn = leadTrickPlayer;
         isFirstTrick = false;
+
         if(!isTrickPhaseOver()) trick();
         else {
             tricksPerTeam[leadTrickPlayer%2] += 2;
@@ -493,7 +520,6 @@ public class Pinochle implements Initializable {
         advanceButton.setOnAction(this::endGame);
         advanceButton.setText("To End");
     }
-
 
     private void endGame(ActionEvent event) {
         activate(scoresGroup, false);
@@ -874,7 +900,7 @@ public class Pinochle implements Initializable {
     private void layMeld() {
         for (int i = 0; i < playersMeldsGroup.getChildren().size(); i++) {
             VBox parent = (VBox) playersMeldsGroup.getChildren().get(i);
-            ArrayList<String> meldCards = getMeldCards(players[i].getMeldCardsHashMap(trumpSuit));
+            ArrayList<String> meldCards = getMeldCards(i);
             for (int j = 0; j < Objects.requireNonNull(parent).getChildren().size(); j++) {
                 HBox subBox = (HBox) parent.getChildren().get(j);
                 subBox.getChildren().clear();
@@ -890,14 +916,16 @@ public class Pinochle implements Initializable {
 
     /**
      * Gets the cards for each player to lay
-     * @param meldCardsHashMap Return from getMeldCardsHashMap(trumpSuit) in Player class
+     * @param player index of player
      * @return ArrayList of cards to lay
      */
-    private ArrayList<String> getMeldCards(HashMap<String, Integer> meldCardsHashMap) {
+    private ArrayList<String> getMeldCards(int player) {
+        HashMap<String, Integer> meldCardsHashMap = players[player].getMeldCardsHashMap(trumpSuit);
         ArrayList<String> meldCards = new ArrayList<>();
         for (String card : meldCardsHashMap.keySet()) {
             for (int i = 0; i < meldCardsHashMap.get(card); i++) {
                 meldCards.add(card);
+                knownCards[player].add(card);
             }
         }
         return meldCards;
@@ -970,7 +998,14 @@ public class Pinochle implements Initializable {
             blockCards(true);
             playerCardPlayed = players[0].getHand()[i].toString();
 
-            players[0].playCard(i);
+            if(knownCards[0].contains(playerCardPlayed)) knownCards[0].remove(playerCardPlayed);
+
+            currentTrick.add(playerCardPlayed);
+
+            String card = players[0].playCard(i);
+            cardsLeft.put(card, cardsLeft.get(card)-1);
+            playerTrumping(0, card);
+
             ((ImageView) ((HBox) handsGroup.getChildren().get(0)).getChildren().get(i)).setImage(null);
 
             toCenter();
@@ -979,19 +1014,18 @@ public class Pinochle implements Initializable {
         }
     }
 
-    private void declareWinnerOfTrick() {
+    private int declareWinnerOfTrick(ArrayList<String> trick) {
         ArrayList<String> orderGeneral = getTrickOrder();
 
         int winner = 0;
-        int highestIndex = orderGeneral.indexOf(currentTrick.get(0));
-        for(int i=0; i<currentTrick.size(); i++) {
-            if(orderGeneral.indexOf(currentTrick.get(i))>highestIndex) {
-                highestIndex = orderGeneral.indexOf(currentTrick.get(i));
+        int highestIndex = orderGeneral.indexOf(trick.get(0));
+        for(int i=0; i<trick.size(); i++) {
+            if(orderGeneral.indexOf(trick.get(i))>highestIndex) {
+                highestIndex = orderGeneral.indexOf(trick.get(i));
                 winner = i;
             }
         }
-        leadTrickPlayer = (winner+leadTrickPlayer)%4;
-        tricksPerTeam[leadTrickPlayer%2] += countPoints();
+        return winner;
     }
 
     private void blockCards(boolean block) {
@@ -1029,7 +1063,6 @@ public class Pinochle implements Initializable {
     private void exitGame(ActionEvent event) {
         ((Node)(event.getSource())).getScene().getWindow().hide();
     }
-
 
     private HBox addNewScoreRow() {
         HBox scoreRow = new HBox();
@@ -1115,5 +1148,33 @@ public class Pinochle implements Initializable {
         rotate.setByAngle(rot);
         translate.play();
         rotate.play();
+    }
+
+    private void playerTrumping(int player, String card) {
+        int suitOfTrickIndex = IntStream.range(0, suits.length).filter(i -> suits[i].equals(String.valueOf(currentTrick.get(0).charAt(1)))).findFirst().orElse(-1);
+        if(!isTrumping[player][suitOfTrickIndex] && currentTrick.get(0).charAt(1)!=card.charAt(1) && trumpSuit.equals(String.valueOf(card.charAt(1)))) { // Trumped
+            isTrumping[player][suitOfTrickIndex] = true;
+            System.out.println("Player " + player + " is out of " + suits[suitOfTrickIndex]);
+        } else if(hasTrump[player] && !getTrickOrder().contains(card)) { // No trump left
+            hasTrump[player] = false;
+            isTrumping[player] = new boolean[suits.length];
+            System.out.println("Player " + player + " is out of trump");
+        }
+
+        ArrayList<String> trick = (ArrayList<String>) currentTrick.clone();
+        for(int i=trick.size()-1; i>=0; i--) {
+            if(i>(4+player-leadTrickPlayer)%4)
+                trick.remove(i);
+        }
+
+        if(declareWinnerOfTrick(trick)!=trick.size()-1) {
+            int winner = declareWinnerOfTrick(trick);
+            ArrayList<String> order = getTrickOrder();
+            int trumpSuitIndex = IntStream.range(0, suits.length).filter(i -> suits[i].equals(trumpSuit)).findFirst().orElse(-1);
+            if(order.contains(card)) {
+                if (suits[suitOfTrickIndex].equals(String.valueOf(card.charAt(1))) && order.indexOf(trick.get(winner)) < order.indexOf(maxCards[player][suitOfTrickIndex]) && order.indexOf(trick.get(winner)) < 5) maxCards[player][suitOfTrickIndex] = trick.get(winner);
+                else if (order.indexOf(trick.get(winner)) < order.indexOf(maxCards[player][trumpSuitIndex])) maxCards[player][trumpSuitIndex] = trick.get(winner);
+            }
+        }
     }
 }

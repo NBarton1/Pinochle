@@ -12,7 +12,6 @@ import java.io.IOException;
 
 public class PinochleApplication extends Application {
 
-
     @Override
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(PinochleApplication.class.getResource("Pinochle.fxml"));
@@ -31,19 +30,9 @@ public class PinochleApplication extends Application {
         launch();
     }
 
-    private static class SizeChangeListener implements ChangeListener<Number> {
-        private final Scene scene;
-        private final double height;
-        private final double width;
-
-        public SizeChangeListener(Scene scene, double width, double height) {
-            this.scene = scene;
-            this.height = height;
-            this.width = width;
-        }
-
+    private record SizeChangeListener(Scene scene, double width, double height) implements ChangeListener<Number> {
         public void changed(ObservableValue<? extends Number> observableValue, Number oldValue, Number newValue) {
-            scene.getRoot().getTransforms().setAll(new Scale(scene.getWidth()/width, scene.getHeight()/height, 0, 0));
+            scene.getRoot().getTransforms().setAll(new Scale(scene.getWidth() / width, scene.getHeight() / height, 0, 0));
         }
     }
 }

@@ -2,6 +2,7 @@ package com.example.pinochle;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 /**
@@ -350,9 +351,11 @@ public class Player {
      * Plays a card by removing it from the hand
      * @param i index of card to remove
      */
-    public void playCard(int i) {
+    public String playCard(int i) {
+        String card = hand[i].toString();
         hand[i] = null;
         toCenter();
+        return card;
     }
 
     /**
@@ -642,6 +645,17 @@ public class Player {
             }
         }
         return legalCards;
+    }
+
+    public String getCardToPlay(ArrayList<String> trick, String trumpSuit, HashMap<String, Integer> cardsLeft, ArrayList[] knownCards, boolean[][] isTrumping, boolean[] hasTrump, int player) {
+        double risk = .5;
+
+        if(trick.isEmpty()) {
+
+        } else {
+
+        }
+        return hand[getLegalCards(trick, trumpSuit).get(0)].toString();
     }
 
     /**

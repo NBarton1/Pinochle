@@ -302,6 +302,8 @@ public class Pinochle implements Initializable {
      * The bidding process
      */
     private void bid() {
+        double seconds = .25;
+
         if (!endBiddingPhase) {
             int bidder = 1;
             if (isBidding[0] == 0)
@@ -320,7 +322,7 @@ public class Pinochle implements Initializable {
                 int finalI = i;
                 if (isBidding[i] != -1) {
                     biddersLeft++;
-                    time.getKeyFrames().add(new KeyFrame(Duration.seconds(biddersLeft), e -> computerBid(finalI)));
+                    time.getKeyFrames().add(new KeyFrame(Duration.seconds(biddersLeft*seconds), e -> computerBid(finalI)));
                 }
             }
             time.getKeyFrames().add(new KeyFrame(Duration.seconds(1), (KeyValue) null));
@@ -403,6 +405,8 @@ public class Pinochle implements Initializable {
     }
 
     private void trick() {
+        double seconds = .25;
+
         Timeline time = new Timeline();
         int iterator = 1;
 
@@ -411,11 +415,11 @@ public class Pinochle implements Initializable {
                 String cardToPlay = players[trickTurn].getCardToPlay(currentTrick, trumpSuit, cardsLeft, knownCards, isTrumping, hasTrump, trickTurn);
                 currentTrick.add(cardToPlay);
                 int finalI = trickTurn;
-                time.getKeyFrames().add(new KeyFrame(Duration.seconds(iterator), e -> playCardVisual(finalI, cardToPlay)));
+                time.getKeyFrames().add(new KeyFrame(Duration.seconds(iterator*seconds), e -> playCardVisual(finalI, cardToPlay)));
                 iterator++;
                 trickTurn = (trickTurn + 1) % 4;
             }
-            time.getKeyFrames().add(new KeyFrame(Duration.seconds(iterator-.9), (KeyValue) null));
+            time.getKeyFrames().add(new KeyFrame(Duration.seconds((iterator-1)*seconds+.1), (KeyValue) null));
             time.play();
             time.setOnFinished(e -> blockCards(false));
         }
@@ -428,7 +432,7 @@ public class Pinochle implements Initializable {
                 String cardToPlay = players[trickTurn].getCardToPlay(currentTrick, trumpSuit, cardsLeft, knownCards, isTrumping, hasTrump, trickTurn);
                 currentTrick.add(cardToPlay);
                 int finalI = trickTurn;
-                time.getKeyFrames().add(new KeyFrame(Duration.seconds(iterator), e -> playCardVisual(finalI, cardToPlay)));
+                time.getKeyFrames().add(new KeyFrame(Duration.seconds(iterator*seconds), e -> playCardVisual(finalI, cardToPlay)));
                 iterator++;
                 trickTurn = (trickTurn + 1) % 4;
             }
@@ -451,7 +455,7 @@ public class Pinochle implements Initializable {
         computerToCenter(player);
         cardsLeft.put(card, cardsLeft.get(card)-1);
         playerTrumping(player, card);
-        if(knownCards[player].contains(card)) knownCards[player].remove(card);
+        knownCards[player].remove(card);
     }
 
     private void playCardVisual(String card) {
@@ -1154,11 +1158,10 @@ public class Pinochle implements Initializable {
         int suitOfTrickIndex = IntStream.range(0, suits.length).filter(i -> suits[i].equals(String.valueOf(currentTrick.get(0).charAt(1)))).findFirst().orElse(-1);
         if(!isTrumping[player][suitOfTrickIndex] && currentTrick.get(0).charAt(1)!=card.charAt(1) && trumpSuit.equals(String.valueOf(card.charAt(1)))) { // Trumped
             isTrumping[player][suitOfTrickIndex] = true;
-            System.out.println("Player " + player + " is out of " + suits[suitOfTrickIndex]);
+            maxCards[player][suitOfTrickIndex] = "J"+suits[suitOfTrickIndex];
         } else if(hasTrump[player] && !getTrickOrder().contains(card)) { // No trump left
             hasTrump[player] = false;
             isTrumping[player] = new boolean[suits.length];
-            System.out.println("Player " + player + " is out of trump");
         }
 
         ArrayList<String> trick = (ArrayList<String>) currentTrick.clone();
@@ -1172,7 +1175,7 @@ public class Pinochle implements Initializable {
             ArrayList<String> order = getTrickOrder();
             int trumpSuitIndex = IntStream.range(0, suits.length).filter(i -> suits[i].equals(trumpSuit)).findFirst().orElse(-1);
             if(order.contains(card)) {
-                if (suits[suitOfTrickIndex].equals(String.valueOf(card.charAt(1))) && order.indexOf(trick.get(winner)) < order.indexOf(maxCards[player][suitOfTrickIndex]) && order.indexOf(trick.get(winner)) < 5) maxCards[player][suitOfTrickIndex] = trick.get(winner);
+                if (suits[suitOfTrickIndex].equals(String.valueOf(card.charAt(1))) && order.indexOf(trick.get(winner)) < 5) maxCards[player][suitOfTrickIndex] = trick.get(winner);
                 else if (order.indexOf(trick.get(winner)) < order.indexOf(maxCards[player][trumpSuitIndex])) maxCards[player][trumpSuitIndex] = trick.get(winner);
             }
         }

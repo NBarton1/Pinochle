@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.stream.IntStream;
 
 /**
  * Player class for each player in the game
@@ -647,15 +648,35 @@ public class Player {
         return legalCards;
     }
 
-    public String getCardToPlay(ArrayList<String> trick, String trumpSuit, HashMap<String, Integer> cardsLeft, ArrayList[] knownCards, boolean[][] isTrumping, boolean[] hasTrump, int player) {
-        double risk = .5;
+    public String getCardToPlay(ArrayList<String> trick, String trumpSuit, HashMap<String, Integer> cardsLeft, ArrayList<String>[] knownCards, boolean[][] isTrumping, boolean[] hasTrump, int player) {
+        double risk = .35; // Will play cards that have a probability >risk of winning the trick
+
+        ArrayList<String> legalCards = new ArrayList<>();
+        getLegalCards(trick, trumpSuit).forEach(i -> legalCards.add(hand[i].toString()));
 
         if(trick.isEmpty()) {
+            /*double maxp = 0;
+            double maxt = 0;
+            String maxpCard = "";
+            String maxtCard = "";
+            for(String card : legalCards) {
+                double t = calcTWinChance(); // TODO: make this method
+                double p = calcWinChance(); // TODO: make this method
+                boolean notTrump = !String.valueOf(card.charAt(1)).equals(trumpSuit);
+                if(notTrump && p > risk) {
+                    maxp = p;
+                    maxpCard = card;
+                } if(notTrump || new ArrayList<Character>(Arrays.asList('J', 'Q')).contains(card.charAt(0)) && t > risk) {
+                    maxt = t;
+                    maxtCard = card;
+                }
+
+            }*/
 
         } else {
 
         }
-        return hand[getLegalCards(trick, trumpSuit).get(0)].toString();
+        return playCard(getLegalCards(trick, trumpSuit).get(0));
     }
 
     /**

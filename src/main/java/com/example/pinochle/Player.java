@@ -649,35 +649,62 @@ public class Player {
     }
 
     public String getCardToPlay(ArrayList<String> trick, String trumpSuit, HashMap<String, Integer> cardsLeft, ArrayList<String>[] knownCards, boolean[][] isTrumping, boolean[] hasTrump, int player) {
-        double risk = .35; // Will play cards that have a probability >risk of winning the trick
+        /*double risk = .35; // Will play cards that have a probability >risk of winning the trick
 
         ArrayList<String> legalCards = new ArrayList<>();
         getLegalCards(trick, trumpSuit).forEach(i -> legalCards.add(hand[i].toString()));
 
-        if(trick.isEmpty()) {
-            /*double maxp = 0;
-            double maxt = 0;
-            String maxpCard = "";
-            String maxtCard = "";
-            for(String card : legalCards) {
-                double t = calcTWinChance(); // TODO: make this method
-                double p = calcWinChance(); // TODO: make this method
-                boolean notTrump = !String.valueOf(card.charAt(1)).equals(trumpSuit);
-                if(notTrump && p > risk) {
-                    maxp = p;
-                    maxpCard = card;
-                } if(notTrump || new ArrayList<Character>(Arrays.asList('J', 'Q')).contains(card.charAt(0)) && t > risk) {
-                    maxt = t;
-                    maxtCard = card;
-                }
+        if(trick.isEmpty()) { // Leading trick
+            String[] max = getWinChance(legalCards, trumpSuit);
+            if(calcWinChance(max[0]) > risk) return max[0]; // If you are confident in winning the trick
+            else if(calcTWinChance(max[1]) > risk) return max[1]; // If you are confident in teammate winning the trick
+            else if(legalCards.contains("J"+trumpSuit) || legalCards.contains("Q"+trumpSuit)) return (legalCards.contains("Q"+trumpSuit)) ? "Q"+trumpSuit : "J"+trumpSuit; // If you want to get to your teammate
+            else return getLowestCard(legalCards, trumpSuit); // Give up and throw low
 
-            }*/
-
-        } else {
-
-        }
+        } else { // Playing in trick
+            if(String.valueOf(trick.get(0).charAt(1)).equals(trumpSuit)) { // Trump trick
+                if(legalCards.contains("A"+trumpSuit) && wantTheLead()) return "A"+trumpSuit; // If you really want the trick TODO: make this method
+                else if(legalCards.contains("T"+trumpSuit)) return "T"+trumpSuit; // Else throw a 10 if you have it
+                else return getLowestCard(legalCards, trumpSuit); // Else throw the lowest card
+            } else { // Normal trick
+                String[] max = getWinChance(legalCards, trumpSuit);
+                if(calcWinChance(max[0]) > risk) return max[0]; // If you are confident in winning the trick
+                else if(calcTWinChance(max[1]) > risk) return max[1]; // If you are confident in teammate winning the trick
+                else return getLowestCard(legalCards, trumpSuit); // Give up and throw low
+            }
+        }*/
         return playCard(getLegalCards(trick, trumpSuit).get(0));
     }
+
+    private String getLowestCard(ArrayList<String> legalCards, String trumpSuit) {
+        for(String value : values) {
+            for(String suit : suits) {
+                if(!suit.equals(trumpSuit) && legalCards.contains(value+suit)) return value+suit;
+            }
+        }
+        for(String value : values) {
+            if(legalCards.contains(value+trumpSuit)) return value+trumpSuit;
+        }
+        return "";
+    }
+
+    /*public String[] getWinChance(ArrayList<String> legalCards, String trumpSuit) {
+        double maxp = 0;
+        double maxt = 0;
+        String maxpCard = "";
+        String maxtCard = "";
+        for(String card : legalCards) {
+            double p = calcWinChance(card); // TODO: make this method
+            double t = calcTWinChance(card); // TODO: make this method
+            if(!String.valueOf(card.charAt(1)).equals(trumpSuit)) {
+                maxp = Math.max(maxp, p);
+                maxt = Math.max(maxt, t);
+                maxpCard = (maxp == p) ? card : maxpCard;
+                maxtCard = (maxt == t) ? card : maxtCard;
+            }
+        }
+        return new String[] {maxpCard, maxtCard};
+    }*/
 
     /**
      * Provides string representation of Player class
